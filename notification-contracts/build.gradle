@@ -5,12 +5,10 @@ plugins {
 group = 'uz.tengebank'
 version = '0.0.1'
 
-dependencies {
-    api 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+repositories {
+    mavenCentral()
 }
 
-test {
-    useJUnitPlatform()
+dependencies {
+    api 'com.fasterxml.jackson.core:jackson-databind:2.19.1'
 }

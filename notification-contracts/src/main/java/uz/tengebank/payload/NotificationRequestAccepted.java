@@ -1,26 +1,22 @@
-package uz.tengebank.notificationauditservice.dto;
+package uz.tengebank.payload;
 
-import lombok.Getter;
+import lombok.Data;
 
 import java.util.List;
 import java.util.UUID;
 
-@Getter
-public class NotificationRequestReceived {
-
-    public final String EVENT_TYPE = "notification.request.received.v1";
-
+@Data
+public final class NotificationRequestAccepted implements Payload {
     private UUID requestId;
-    private String requestType; // push, sms, auto
+    private String requestType;
     private String templateName;
     private String fullRequestPayload;
     private List<Recipient> recipients;
 
-    @Getter
-    public static class Recipient {
+    @Data
+    public static final class Recipient {
         private String recipientId;
         private String destinationAddress;
         private String channelType;
     }
-
 }

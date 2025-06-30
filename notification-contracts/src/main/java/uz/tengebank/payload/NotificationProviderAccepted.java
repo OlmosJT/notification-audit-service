@@ -1,8 +1,11 @@
-package uz.tengebank.notificationauditservice.dto;
+package uz.tengebank.payload;
+
+import lombok.Data;
 
 import java.util.UUID;
 
-public class NotificationSentToProvider {
+@Data
+public final class NotificationProviderAccepted implements Payload {
     private UUID requestId;
     private String recipientId;
     private String provider;
