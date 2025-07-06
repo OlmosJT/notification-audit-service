@@ -17,9 +17,9 @@ import uz.tengebank.notificationcontracts.events.EventType;
 )
 @JsonSubTypes({
     @JsonSubTypes.Type(value = NotificationRequestAccepted.class, name = EventType.NOTIFICATION_REQUEST_ACCEPTED_V1),
-    @JsonSubTypes.Type(value = NotificationProcessingFailed.class, name = EventType.NOTIFICATION_REQUEST_ACCEPTED_V1),
+    @JsonSubTypes.Type(value = NotificationProcessingFailed.class, name = EventType.NOTIFICATION_PROCESSING_FAILED_V1),
+    @JsonSubTypes.Type(value = NotificationAttemptFailed.class, name = EventType.NOTIFICATION_ATTEMPT_FAILED_V1)
 })
-public sealed interface Payload permits
-    NotificationRequestAccepted,
-    NotificationProcessingFailed {
+public sealed interface Payload permits NotificationAttemptFailed, NotificationProcessingFailed, NotificationRequestAccepted {
+
 }

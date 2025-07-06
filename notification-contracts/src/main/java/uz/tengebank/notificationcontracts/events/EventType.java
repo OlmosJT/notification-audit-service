@@ -12,4 +12,5 @@ public final class EventType {
 
     public static final String NOTIFICATION_REQUEST_ACCEPTED_V1 = "notification.request.accepted.v1";
     public static final String NOTIFICATION_PROCESSING_FAILED_V1 = "notification.processing.failed.v1";
+    public static final String NOTIFICATION_ATTEMPT_FAILED_V1 = "notification.attempt.failed.v1";
 }
