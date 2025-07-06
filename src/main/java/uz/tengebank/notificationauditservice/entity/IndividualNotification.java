@@ -3,8 +3,8 @@ package uz.tengebank.notificationauditservice.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import uz.tengebank.events.enums.ChannelType;
-import uz.tengebank.events.enums.NotificationStatus;
+import uz.tengebank.notificationcontracts.events.enums.ChannelType;
+import uz.tengebank.notificationcontracts.events.enums.NotificationStatus;
 
 import java.time.OffsetDateTime;
 

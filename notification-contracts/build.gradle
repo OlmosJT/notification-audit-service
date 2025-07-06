@@ -1,9 +1,10 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 group = 'uz.tengebank'
-version = '0.0.1'
+version = '1.0.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -11,4 +12,24 @@ repositories {
 
 dependencies {
     api 'com.fasterxml.jackson.core:jackson-databind:2.19.1'
+}
+
+/* Whenever you make a change to notification-contracts, you must publish it.
+   Run this command from the root of the notification-audit-service project:
+   > ./gradlew :notification-contracts:publishToMavenLocal
+
+   Finally, in your complete separate notification-ebadf-service project, declare a standard dependency on the library
+   you just published
+    // Gradle will find the 1.0.0-SNAPSHOT JAR in your local Maven repo
+   > implementation 'uz.tengebank:notification-contracts:1.0.0-SNAPSHOT'
+
+   then run comand on project to build dependency
+   > ./gradlew clean build --refresh-dependencies
+*/
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            from components.java
+        }
+    }
 }

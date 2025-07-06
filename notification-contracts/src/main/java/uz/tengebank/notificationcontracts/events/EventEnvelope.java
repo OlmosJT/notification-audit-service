@@ -1,9 +1,9 @@
-package uz.tengebank.events;
+package uz.tengebank.notificationcontracts.events;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import uz.tengebank.payload.Payload;
+import uz.tengebank.notificationcontracts.payload.Payload;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;

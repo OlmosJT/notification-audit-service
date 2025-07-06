@@ -1,4 +1,4 @@
-package uz.tengebank.events.enums;
+package uz.tengebank.notificationcontracts.events.enums;
 
 public enum NotificationStatus {
     REQUEST_ACCEPTED,
