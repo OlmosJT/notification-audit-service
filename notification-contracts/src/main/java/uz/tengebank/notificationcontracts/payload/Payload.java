@@ -11,12 +11,15 @@ import uz.tengebank.notificationcontracts.events.EventType;
  * Java object based on the 'eventType' field in the event envelope.
  */
 @JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
-        property = "eventType"
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
+    property = "eventType"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = NotificationRequestAccepted.class, name = EventType.NOTIFICATION_REQUEST_ACCEPTED_V1),
+    @JsonSubTypes.Type(value = NotificationRequestAccepted.class, name = EventType.NOTIFICATION_REQUEST_ACCEPTED_V1),
+    @JsonSubTypes.Type(value = NotificationProcessingFailed.class, name = EventType.NOTIFICATION_REQUEST_ACCEPTED_V1),
 })
 public sealed interface Payload permits
-        NotificationRequestAccepted { }
+    NotificationRequestAccepted,
+    NotificationProcessingFailed {
+}

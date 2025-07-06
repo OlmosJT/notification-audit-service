@@ -9,6 +9,7 @@ public final class EventType {
 
     private EventType() {}
 
-    /** Fired when a new request is successfully validated and accepted by the gateway. */
+
     public static final String NOTIFICATION_REQUEST_ACCEPTED_V1 = "notification.request.accepted.v1";
+    public static final String NOTIFICATION_PROCESSING_FAILED_V1 = "notification.processing.failed.v1";
 }
