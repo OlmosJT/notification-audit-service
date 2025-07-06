@@ -14,7 +14,7 @@ import java.util.UUID;
  */
 public record NotificationAttemptFailed(
     UUID requestId,
-    String recipientId,
+    UUID recipientId,
     String channel,
     String reason,
     String details
