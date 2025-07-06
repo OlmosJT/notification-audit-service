@@ -19,8 +19,8 @@ import uz.tengebank.events.EventType;
         @JsonSubTypes.Type(value = NotificationRequestAccepted.class, name = EventType.NOTIFICATION_REQUEST_ACCEPTED_V1),
         @JsonSubTypes.Type(value = NotificationChannelRouted.class, name = EventType.NOTIFICATION_CHANNEL_ROUTED_V1),
         @JsonSubTypes.Type(value = NotificationProcessingStarted.class, name = EventType.NOTIFICATION_PROCESSING_STARTED_V1),
-        @JsonSubTypes.Type(value = NotificationProviderAccepted.class, name = EventType.NOTIFICATION_PROVIDER_ACCEPTED_V1),
-        @JsonSubTypes.Type(value = NotificationProviderRejected.class, name = EventType.NOTIFICATION_PROVIDER_REJECTED_V1),
+        @JsonSubTypes.Type(value = NotificationProviderAccepted.class, name = EventType.NOTIFICATION_PROVIDER_ACCEPTED_REQUEST_V1),
+        @JsonSubTypes.Type(value = NotificationProviderRejected.class, name = EventType.NOTIFICATION_PROVIDER_REJECTED_REQUEST_V1),
         @JsonSubTypes.Type(value = NotificationAttemptFailed.class, name = EventType.NOTIFICATION_ATTEMPT_FAILED_V1),
         @JsonSubTypes.Type(value = NotificationDelivered.class, name = EventType.NOTIFICATION_DELIVERED_V1),
         @JsonSubTypes.Type(value = NotificationUndelivered.class, name = EventType.NOTIFICATION_UNDELIVERED_V1)

@@ -19,10 +19,10 @@ public final class EventType {
     public static final String NOTIFICATION_PROCESSING_STARTED_V1 = "notification.processing.started.v1";
 
     /** Fired when an external provider's API successfully accepts a notification for delivery. */
-    public static final String NOTIFICATION_PROVIDER_ACCEPTED_V1 = "notification.provider.accepted.v1";
+    public static final String NOTIFICATION_PROVIDER_ACCEPTED_REQUEST_V1 = "notification.provider.accepted.v1";
 
     /** Fired when an external provider's API immediately rejects a notification. */
-    public static final String NOTIFICATION_PROVIDER_REJECTED_V1 = "notification.provider.rejected.v1";
+    public static final String NOTIFICATION_PROVIDER_REJECTED_REQUEST_V1 = "notification.provider.rejected.v1";
 
     /** Fired when an internal, recoverable application error occurs (e.g., template error), potentially triggering a fallback. */
     public static final String NOTIFICATION_ATTEMPT_FAILED_V1 = "notification.attempt.failed.v1";
