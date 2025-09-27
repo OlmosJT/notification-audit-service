@@ -42,7 +42,7 @@ public class EventEnvelope {
 
     /**
      * The name of the microservice that originally published the event.
-     * (e.g., "notification-gateway-service")
+     * (e.g., "notification-gateway-service, notification-template-service, notification-sms-service")
      */
     private String sourceService;
 

@@ -8,7 +8,7 @@ import uz.tengebank.notificationcontracts.events.enums.NotificationStatus;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "notification_status_history", schema = "audit")
+@Table(name = "notification_history", schema = "audit")
 @Getter @Setter
 public class NotificationStatusHistory {
     @Id
@@ -16,12 +16,18 @@ public class NotificationStatusHistory {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "individual_notification_id")
+    @JoinColumn(name = "notification_id")
     private IndividualNotification individualNotification;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationStatus status;
+
+    @Column
+    private String providerMessageId;
+
+    @Column
+    private String reasonCode;
 
     @Column(columnDefinition = "jsonb")
     private String details;

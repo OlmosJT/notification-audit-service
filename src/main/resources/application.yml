@@ -1,6 +1,12 @@
 spring:
   application:
     name: notification-audit-service
+  rabbitmq:
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+        prefetch: 10
   datasource:
     url: jdbc:postgresql://localhost:5432/notification_db
     username: postgres

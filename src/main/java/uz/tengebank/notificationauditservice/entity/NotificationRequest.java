@@ -22,6 +22,13 @@ public class NotificationRequest {
     @Column(nullable = false)
     private String templateName;
 
+    @Column(nullable = false)
+    private String source; // Tenge24, TengeBusiness, M-Delta
+
+    @Column(nullable = false)
+    private String category;
+
+
     @Column(columnDefinition = "jsonb", nullable = false)
     private String fullRequestPayload;
 

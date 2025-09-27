@@ -5,13 +5,12 @@ import uz.tengebank.notificationcontracts.events.enums.ChannelType;
 import java.util.UUID;
 
 /**
- * Event published when an internal error (e.g., network timeout, rendering failure)
- * prevents a worker from successfully contacting the third-party provider.
+ * Event published by a worker service immediately after consuming a message
+ * from its queue, before any other processing.
  */
-public record NotificationAttemptFailed(
+public record NotificationProcessingStarted(
         UUID requestId,
         UUID recipientId,
         ChannelType channel,
-        String reason,
-        String details
+        String workerId
 ) implements Payload {}

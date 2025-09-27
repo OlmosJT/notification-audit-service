@@ -11,15 +11,32 @@ import uz.tengebank.notificationcontracts.events.EventType;
  * Java object based on the 'eventType' field in the event envelope.
  */
 @JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
-    property = "eventType"
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
+        property = "eventType"
 )
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = NotificationRequestAccepted.class, name = EventType.NOTIFICATION_REQUEST_ACCEPTED_V1),
-    @JsonSubTypes.Type(value = NotificationProcessingFailed.class, name = EventType.NOTIFICATION_PROCESSING_FAILED_V1),
-    @JsonSubTypes.Type(value = NotificationAttemptFailed.class, name = EventType.NOTIFICATION_ATTEMPT_FAILED_V1)
+        // Gateway Events
+        @JsonSubTypes.Type(value = NotificationRequestAccepted.class, name = EventType.NOTIFICATION_REQUEST_ACCEPTED_V1),
+        @JsonSubTypes.Type(value = NotificationRequestRejected.class, name = EventType.NOTIFICATION_REQUEST_REJECTED_V1),
+        @JsonSubTypes.Type(value = NotificationChannelRouted.class, name = EventType.NOTIFICATION_CHANNEL_ROUTED_V1),
+        // Worker Events
+        @JsonSubTypes.Type(value = NotificationProcessingStarted.class, name = EventType.NOTIFICATION_PROCESSING_STARTED_V1),
+        @JsonSubTypes.Type(value = NotificationProviderAccepted.class, name = EventType.NOTIFICATION_PROVIDER_ACCEPTED_V1),
+        @JsonSubTypes.Type(value = NotificationProviderRejected.class, name = EventType.NOTIFICATION_PROVIDER_REJECTED_V1),
+        @JsonSubTypes.Type(value = NotificationAttemptFailed.class, name = EventType.NOTIFICATION_ATTEMPT_FAILED_V1),
+        // Webhook Events
+        @JsonSubTypes.Type(value = NotificationDelivered.class, name = EventType.NOTIFICATION_DELIVERED_V1),
+        @JsonSubTypes.Type(value = NotificationUndelivered.class, name = EventType.NOTIFICATION_UNDELIVERED_V1)
 })
-public sealed interface Payload permits NotificationAttemptFailed, NotificationProcessingFailed, NotificationRequestAccepted {
-
+public sealed interface Payload permits
+        NotificationRequestAccepted,
+        NotificationRequestRejected,
+        NotificationChannelRouted,
+        NotificationProcessingStarted,
+        NotificationProviderAccepted,
+        NotificationProviderRejected,
+        NotificationAttemptFailed,
+        NotificationDelivered,
+        NotificationUndelivered {
 }

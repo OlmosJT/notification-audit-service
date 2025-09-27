@@ -7,11 +7,20 @@ import uz.tengebank.notificationcontracts.events.enums.ChannelType;
 import uz.tengebank.notificationcontracts.events.enums.NotificationStatus;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(
-        name = "individual_notifications", schema = "audit",
-        indexes = @Index(name = "idx_recipient_id", columnList = "recipientId")
+        name = "notifications", schema = "audit",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_request_recipient",
+                        columnNames = {"notification_request_id", "recipientId"}
+                )
+        },
+        indexes = {
+                @Index(name = "idx_recipient_id", columnList = "recipientId")
+        }
 )
 @Getter @Setter
 public class IndividualNotification {
@@ -24,7 +33,7 @@ public class IndividualNotification {
     private NotificationRequest notificationRequest;
 
     @Column(nullable = false)
-    private String recipientId;
+    private UUID recipientId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -39,7 +48,7 @@ public class IndividualNotification {
 
     private String provider;
 
-    @Column
+    @Column(unique = true)
     private String providerMessageId;
 
     @Column(nullable = false, updatable = false)
