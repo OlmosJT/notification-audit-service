@@ -1,5 +1,7 @@
 package uz.tengebank.notificationcontracts.dto;
 
+import uz.tengebank.notificationcontracts.events.enums.ChannelType;
+
 import java.util.Map;
 import java.util.UUID;
 
@@ -21,6 +23,8 @@ public record SingleNotificationJob(
          * (From: NotificationRequestDto.Recipient.channelAddresses)
          */
         String destinationAddress,
+
+        ChannelType channel,
 
         /**
          * A map containing the fully rendered content from the template service.

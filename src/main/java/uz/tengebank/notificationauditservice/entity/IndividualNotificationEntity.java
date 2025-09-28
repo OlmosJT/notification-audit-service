@@ -3,6 +3,7 @@ package uz.tengebank.notificationauditservice.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import uz.tengebank.notificationcontracts.events.enums.ChannelType;
 import uz.tengebank.notificationcontracts.events.enums.IndividualNotificationStatus;
 
 import java.time.OffsetDateTime;
@@ -33,6 +34,22 @@ public class IndividualNotificationEntity {
 
     @Column(nullable = false)
     private UUID recipientId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ChannelType channelType;
+
+    @Column(length = 100)
+    private String provider;
+
+    @Column(length = 255, unique = true)
+    private String providerMessageId;
+
+    @Column(nullable = false)
+    private String destinationAddress;
+
+    @Column(columnDefinition = "jsonb")
+    private String jobDetails;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -10,11 +10,11 @@ import uz.tengebank.notificationauditservice.entity.IndividualNotificationEntity
 import uz.tengebank.notificationauditservice.entity.IndividualNotificationStatusHistory;
 import uz.tengebank.notificationauditservice.entity.NotificationRequestEntity;
 import uz.tengebank.notificationauditservice.entity.NotificationRequestStatusHistory;
-import uz.tengebank.notificationauditservice.mapper.NotificationMapper;
 import uz.tengebank.notificationauditservice.repository.IndividualNotificationRepository;
 import uz.tengebank.notificationauditservice.repository.NotificationRequestRepository;
 import uz.tengebank.notificationauditservice.repository.NotificationStatusHistoryRepository;
 import uz.tengebank.notificationcontracts.dto.NotificationRequestDto;
+import uz.tengebank.notificationcontracts.dto.SingleNotificationJob;
 import uz.tengebank.notificationcontracts.events.EventEnvelope;
 import uz.tengebank.notificationcontracts.events.EventType;
 import uz.tengebank.notificationcontracts.events.enums.*;
@@ -32,7 +32,7 @@ import java.util.UUID;
 public class NotificationAuditService {
 
     private final NotificationRequestRepository requestRepository;
-    private final IndividualNotificationRepository notificationRepository;
+    private final IndividualNotificationRepository individualRepository;
     private final NotificationStatusHistoryRepository historyRepository;
     private final ObjectMapper objectMapper;
 
@@ -52,10 +52,347 @@ public class NotificationAuditService {
                     handleRequestCompleted((NotificationRequestCompleted) event.getPayload(), event.getSourceService());
 
             case EventType.INDIVIDUAL_NOTIFICATION_ACCEPTED_V1 ->
-                handleIndividualRequestAccepted((IndividualNotificationAccepted) event.getPayload(), event.getSourceService());
+                    handleIndividualNotificationAccepted((IndividualNotificationAccepted) event.getPayload(), event.getSourceService());
+            case EventType.INDIVIDUAL_NOTIFICATION_ROUTED_V1 ->
+                    handleIndividualNotificationRouted((IndividualNotificationRouted) event.getPayload(), event.getSourceService());
+            case EventType.INDIVIDUAL_NOTIFICATION_DISPATCHED_V1 ->
+                    handleIndividualNotificationDispatched((IndividualNotificationDispatched) event.getPayload(), event.getSourceService());
+            case EventType.INDIVIDUAL_NOTIFICATION_DELIVERED_V1 ->
+                    handleIndividualNotificationDelivered((IndividualNotificationDelivered) event.getPayload(), event.getSourceService());
+            case EventType.INDIVIDUAL_NOTIFICATION_DELIVERY_FAILED_V1 ->
+                    handleIndividualNotificationDeliveryFailed((IndividualNotificationDeliveryFailed) event.getPayload(), event.getSourceService());
+            case EventType.INDIVIDUAL_NOTIFICATION_INTERNAL_FAILURE_V1 ->
+                    handleIndividualNotificationInternalFailure((IndividualNotificationInternalFailure) event.getPayload(), event.getSourceService());
+            case EventType.INDIVIDUAL_NOTIFICATION_READ_V1 ->
+                    handleIndividualNotificationRead((IndividualNotificationRead) event.getPayload(), event.getSourceService());
             default ->
                     log.warn("Received unknown event type: '{}'", event.getEventType());
         }
+    }
+
+    /**
+     * Handles the event indicating a user has read or interacted with a notification.
+     * This handler updates the status from DELIVERED to READ.
+     *
+     * @param payload       The event payload containing interaction details.
+     * @param sourceService The service that published the event.
+     */
+    private void handleIndividualNotificationRead(IndividualNotificationRead payload, String sourceService) {
+        UUID requestId = payload.requestId();
+        UUID recipientId = payload.recipientId();
+
+        // 1. Find the existing individual notification. It MUST exist.
+        var individualEntity = individualRepository.findByRequest_RequestIdAndRecipientId(requestId, recipientId)
+                .orElseThrow(() -> new IllegalStateException(
+                        String.format("Received READ event for an unknown individual notification [requestId: %s, recipientId: %s]",
+                                requestId, recipientId)
+                ));
+
+        // 2. State Transition Check: A notification can only be READ if it was DELIVERED.
+        if (individualEntity.currentStatus() != IndividualNotificationStatus.DELIVERED) {
+            log.warn("Ignoring READ event for recipientId='{}': current status is '{}', not DELIVERED.",
+                    recipientId, individualEntity.currentStatus());
+            return;
+        }
+
+        // 3. Update the entity's current status and timestamp
+        individualEntity.currentStatus(IndividualNotificationStatus.READ)
+                .updatedAt(payload.readAt());
+
+        // 4. Create the new status history record
+        var individualHistory = new IndividualNotificationStatusHistory();
+        individualHistory.individualNotification(individualEntity)
+                .status(IndividualNotificationStatus.READ)
+                .sourceService(sourceService)
+                .details(toJson(Map.of("info", "Notification marked as read.")))
+                .occurredAt(payload.readAt());
+
+        individualEntity.statusHistory().add(individualHistory);
+
+        // 5. Save the updated entity with its new history record.
+        individualRepository.save(individualEntity);
+        log.info("Updated status to READ for recipientId='{}' under requestId='{}'", recipientId, requestId);
+    }
+
+    /**
+     * Handles an internal failure that occurred while processing a single notification.
+     * This could be a template error, failure to connect to a vendor, etc.
+     *
+     * @param payload       The event payload containing the failure reason.
+     * @param sourceService The service where the failure occurred.
+     */
+    private void handleIndividualNotificationInternalFailure(IndividualNotificationInternalFailure payload, String sourceService) {
+        UUID requestId = payload.requestId();
+        UUID recipientId = payload.recipientId();
+
+        // 1. Find the existing individual notification. It MUST exist.
+        var individualEntity = individualRepository.findByRequest_RequestIdAndRecipientId(requestId, recipientId)
+                .orElseThrow(() -> new IllegalStateException(
+                        String.format("Received INTERNAL_FAILURE event for an unknown individual notification [requestId: %s, recipientId: %s]",
+                                requestId, recipientId)
+                ));
+
+        // 2. Idempotency/State Transition Check: Ignore if already in a terminal state.
+        if (isTerminal(individualEntity.currentStatus())) {
+            log.warn("Ignoring INTERNAL_FAILURE event for recipientId='{}': current status is already terminal ('{}').",
+                    recipientId, individualEntity.currentStatus());
+            return;
+        }
+
+        // 3. Update the entity's current status and timestamp
+        individualEntity.currentStatus(IndividualNotificationStatus.INTERNAL_FAILURE)
+                .updatedAt(OffsetDateTime.now());
+
+        // 4. Create the new status history record
+        var individualHistory = new IndividualNotificationStatusHistory();
+        individualHistory.individualNotification(individualEntity)
+                .status(IndividualNotificationStatus.INTERNAL_FAILURE)
+                .sourceService(sourceService)
+                .details(toJson(payload.reason()))
+                .occurredAt(OffsetDateTime.now());
+
+        individualEntity.statusHistory().add(individualHistory);
+
+        // 5. Save the updated entity with its new history record.
+        individualRepository.save(individualEntity);
+        log.info("Updated status to INTERNAL_FAILURE for recipientId='{}' under requestId='{}'", recipientId, requestId);
+    }
+
+
+    /**
+     * Handles the event confirming a message could not be delivered.
+     * This is typically triggered by a vendor webhook.
+     *
+     * @param payload       The event payload containing the failure details.
+     * @param sourceService The service that published the event (e.g., "webhook-service").
+     */
+    private void handleIndividualNotificationDeliveryFailed(IndividualNotificationDeliveryFailed payload, String sourceService) {
+        String providerMessageId = payload.providerMessageId();
+
+        // 1. Find the existing notification using the provider's message ID.
+        var individualEntity = individualRepository.findByProviderMessageId(providerMessageId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Received DELIVERY_FAILED event for an unknown providerMessageId: " + providerMessageId
+                ));
+
+        // 2. Idempotency/State Transition Check: Ignore if already in a terminal state.
+        if (isTerminal(individualEntity.currentStatus())) {
+            log.warn("Ignoring DELIVERY_FAILED event for providerMessageId='{}': current status is already terminal ('{}').",
+                    providerMessageId, individualEntity.currentStatus());
+            return;
+        }
+
+        // 3. Update the entity's current status and timestamp
+        individualEntity.currentStatus(IndividualNotificationStatus.DELIVERY_FAILED)
+                .updatedAt(OffsetDateTime.now());
+
+        // 4. Create the new status history record
+        var individualHistory = new IndividualNotificationStatusHistory();
+        individualHistory.individualNotification(individualEntity)
+                .status(IndividualNotificationStatus.DELIVERY_FAILED)
+                .sourceService(sourceService)
+                .details(toJson(payload.reason()))
+                .occurredAt(OffsetDateTime.now());
+
+        individualEntity.statusHistory().add(individualHistory);
+
+        // 5. Save the updated entity with its new history record.
+        individualRepository.save(individualEntity);
+        log.info("Updated status to DELIVERY_FAILED for providerMessageId='{}'", providerMessageId);
+    }
+
+    /**
+     * Handles the event confirming a message was successfully delivered to the end-user.
+     * This is typically triggered by a vendor webhook.
+     *
+     * @param payload       The event payload containing the delivery confirmation details.
+     * @param sourceService The service that published the event (e.g., "webhook-service").
+     */
+    private void handleIndividualNotificationDelivered(IndividualNotificationDelivered payload, String sourceService) {
+        String providerMessageId = payload.providerMessageId();
+
+        // 1. Find the existing notification using the provider's message ID.
+        var individualEntity = individualRepository.findByProviderMessageId(providerMessageId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Received DELIVERED event for an unknown providerMessageId: " + providerMessageId
+                ));
+
+        // 2. Idempotency/State Transition Check: Ignore if already in a terminal state.
+        if (isTerminal(individualEntity.currentStatus())) {
+            log.warn("Ignoring DELIVERED event for providerMessageId='{}': current status is already terminal ('{}').",
+                    providerMessageId, individualEntity.currentStatus());
+            return;
+        }
+
+        // 3. Update the entity's current status and timestamp
+        individualEntity.currentStatus(IndividualNotificationStatus.DELIVERED)
+                .updatedAt(payload.deliveredAt());
+
+        // 4. Create the new status history record
+        var individualHistory = new IndividualNotificationStatusHistory();
+        individualHistory.individualNotification(individualEntity) // Link to parent
+                .status(IndividualNotificationStatus.DELIVERED)
+                .sourceService(sourceService)
+                .details(toJson(Map.of(
+                        "info", "Delivery confirmed by provider.",
+                        "provider", payload.provider()
+                )))
+                .occurredAt(payload.deliveredAt());
+
+        individualEntity.statusHistory().add(individualHistory);
+
+        // 5. Save the updated entity with its new history record.
+        individualRepository.save(individualEntity);
+        log.info("Updated status to DELIVERED for providerMessageId='{}'", providerMessageId);
+    }
+
+    /**
+     * Handles the event indicating a message has been successfully dispatched to a
+     * third-party vendor.
+     *
+     * @param payload       The event payload containing provider and message ID details.
+     * @param sourceService The service that published the event (e.g., "notification-sms-service").
+     */
+    private void handleIndividualNotificationDispatched(IndividualNotificationDispatched payload, String sourceService) {
+        UUID requestId = payload.requestId();
+        UUID recipientId = payload.recipientId();
+
+        // 1. Find the existing individual notification. It MUST exist.
+        var individualEntity = individualRepository.findByRequest_RequestIdAndRecipientId(requestId, recipientId)
+                .orElseThrow(() -> new IllegalStateException(
+                        String.format("Received DISPATCHED event for an unknown individual notification [requestId: %s, recipientId: %s]",
+                                requestId, recipientId)
+                ));
+
+        // 2. Idempotency/State Transition Check: Ensure the current state is not already past 'DISPATCHED'.
+        if (isStateBeyond(individualEntity.currentStatus(), IndividualNotificationStatus.DISPATCHED)) {
+            log.warn("Ignoring DISPATCHED event for recipientId='{}': current status is '{}'.",
+                    recipientId, individualEntity.currentStatus());
+            return;
+        }
+
+        // 3. Update the entity's status, provider details, and timestamp
+        individualEntity.currentStatus(IndividualNotificationStatus.DISPATCHED)
+                .provider(payload.provider())
+                .providerMessageId(payload.providerMessageId())
+                .updatedAt(OffsetDateTime.now());
+
+        // 4. Create the new status history record
+        var individualHistory = new IndividualNotificationStatusHistory();
+        individualHistory.individualNotification(individualEntity)
+                .status(IndividualNotificationStatus.DISPATCHED)
+                .sourceService(sourceService)
+                .details(toJson(Map.of(
+                        "info", "Message dispatched to provider.",
+                        "provider", payload.provider(),
+                        "providerMessageId", payload.providerMessageId()
+                )))
+                .occurredAt(OffsetDateTime.now());
+
+        individualEntity.statusHistory().add(individualHistory);
+
+        // 5. Save the updated entity with its new history record.
+        individualRepository.save(individualEntity);
+        log.info("Updated status to DISPATCHED for recipientId='{}' under requestId='{}'", recipientId, requestId);
+    }
+
+    /**
+     * Handles the event indicating a message for a single recipient has been
+     * successfully routed to a channel-specific queue.
+     *
+     * @param payload       The event payload containing correlation IDs and channel info.
+     * @param sourceService The service that published the event.
+     */
+    private void handleIndividualNotificationRouted(IndividualNotificationRouted payload, String sourceService) {
+        UUID requestId = payload.requestId();
+        UUID recipientId = payload.recipientId();
+
+        // 1. Find the existing individual notification. It MUST exist.
+        var individualEntity = individualRepository.findByRequest_RequestIdAndRecipientId(requestId, recipientId)
+                .orElseThrow(() -> new IllegalStateException(
+                        String.format("Received ROUTED event for an unknown individual notification [requestId: %s, recipientId: %s]",
+                                requestId, recipientId)
+                ));
+
+        // 2. Idempotency/State Transition Check: Ensure the current state is not already past 'ROUTED'.
+        if (isStateBeyond(individualEntity.currentStatus(), IndividualNotificationStatus.ROUTED)) {
+            log.warn("Ignoring ROUTED event for recipientId='{}': current status is '{}'.",
+                    recipientId, individualEntity.currentStatus());
+            return;
+        }
+
+        // 3. Update the entity's current status and timestamp
+        individualEntity.currentStatus(IndividualNotificationStatus.ROUTED)
+                .updatedAt(OffsetDateTime.now());
+
+        // 4. Create the new status history record
+        var individualHistory = new IndividualNotificationStatusHistory();
+        individualHistory.individualNotification(individualEntity)
+                .status(IndividualNotificationStatus.ROUTED)
+                .sourceService(sourceService)
+                .details(toJson(Map.of("info", "Message routed to " + payload.channel() + " queue.")))
+                .occurredAt(OffsetDateTime.now());
+
+        individualEntity.statusHistory().add(individualHistory);
+
+        // 5. Save the updated entity with its new history record.
+        individualRepository.save(individualEntity);
+        log.info("Updated status to ROUTED for recipientId='{}' under requestId='{}'", recipientId, requestId);
+    }
+
+    /**
+     * Handles the creation of a single individual notification record.
+     * This is triggered for each recipient processed by the gateway.
+     *
+     * @param payload       The event payload containing the job details for one recipient.
+     * @param sourceService The service that published the event.
+     */
+    private void handleIndividualNotificationAccepted(IndividualNotificationAccepted payload, String sourceService) {
+        SingleNotificationJob job = payload.recipientDto();
+        UUID requestId = job.requestId();
+        UUID recipientId = job.recipientId();
+
+        // 1. Idempotency Check: Ensure we haven't created this record before.
+        if (individualRepository.findByRequest_RequestIdAndRecipientId(requestId, recipientId).isPresent()) {
+            log.warn("Individual notification for requestId='{}' and recipientId='{}' already exists. Ignoring duplicate event.",
+                    requestId, recipientId);
+            return;
+        }
+
+        // 2. Find the parent request. It MUST exist.
+        var requestEntity = requestRepository.findByRequestId(requestId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Received individual notification event for an unknown parent requestId: " + requestId
+                ));
+
+        // 3. Create the new IndividualNotificationEntity
+        var individualEntity = new IndividualNotificationEntity();
+        individualEntity.request(requestEntity)
+                .recipientId(recipientId)
+                .channelType(job.channel())
+                .destinationAddress(job.destinationAddress())
+                .jobDetails(toJson(Map.of(
+                        "renderedContent", job.renderedContent(),
+                        "channelParams", job.channelParams()
+                )))
+                .currentStatus(IndividualNotificationStatus.ACCEPTED)
+                .createdAt(OffsetDateTime.now())
+                .updatedAt(OffsetDateTime.now());
+
+        // 4. Create its initial status history record
+        var individualHistory = new IndividualNotificationStatusHistory();
+        individualHistory.individualNotification(individualEntity)
+                .status(IndividualNotificationStatus.ACCEPTED)
+                .sourceService(sourceService)
+                .details(toJson(Map.of("info", "Individual notification accepted for processing.")))
+                .occurredAt(OffsetDateTime.now());
+
+        individualEntity.statusHistory().add(individualHistory);
+
+        // 5. Save the new entity. Cascading will save its history record.
+        individualRepository.save(individualEntity);
+        log.info("Successfully created individual notification for recipientId='{}' under requestId='{}'",
+                recipientId, requestId);
     }
 
     /**
@@ -402,5 +739,13 @@ public class NotificationAuditService {
     private boolean isFailed(IndividualNotificationStatus status) {
         return status == IndividualNotificationStatus.DELIVERY_FAILED ||
                 status == IndividualNotificationStatus.INTERNAL_FAILURE;
+    }
+
+    /**
+     * Helper method to check if a status is at or beyond a certain point in the lifecycle.
+     * This requires the enum constants to be declared in chronological order.
+     */
+    private boolean isStateBeyond(IndividualNotificationStatus currentStatus, IndividualNotificationStatus targetStatus) {
+        return currentStatus.ordinal() >= targetStatus.ordinal();
     }
 }

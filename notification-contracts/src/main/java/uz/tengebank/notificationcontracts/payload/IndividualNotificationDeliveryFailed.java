@@ -13,6 +13,7 @@ public record IndividualNotificationDeliveryFailed(
         UUID recipientId,
         ChannelType channel,
         String provider,
+        String providerMessageId,
         FailureDetails reason
 ) implements Payload {
 
