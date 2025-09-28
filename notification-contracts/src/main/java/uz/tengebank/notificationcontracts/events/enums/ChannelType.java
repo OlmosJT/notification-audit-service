@@ -1,10 +1,7 @@
 package uz.tengebank.notificationcontracts.events.enums;
 
-import uz.tengebank.notificationcontracts.utils.NotImplementedYet;
+import uz.tengebank.notificationcontracts.utils.NIY;
 
 public enum ChannelType {
-    SMS,
-    @NotImplementedYet PUSH,
-    @NotImplementedYet EMAIL,
-    @NotImplementedYet TELEGRAM
+    SMS, @NIY PUSH, @NIY EMAIL, @NIY TELEGRAM
 }

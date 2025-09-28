@@ -1,50 +1,52 @@
 package uz.tengebank.notificationauditservice.mapper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import uz.tengebank.notificationauditservice.entity.IndividualNotification;
 import uz.tengebank.notificationauditservice.entity.NotificationRequest;
-import uz.tengebank.notificationauditservice.entity.NotificationStatusHistory;
-import uz.tengebank.notificationcontracts.events.enums.ChannelType;
-import uz.tengebank.notificationcontracts.events.enums.NotificationStatus;
 import uz.tengebank.notificationcontracts.payload.NotificationRequestAccepted;
 
+import java.io.UncheckedIOException;
 import java.time.OffsetDateTime;
 
 /**
  * Maps event payloads to JPA entities.
  */
 @Component
+@RequiredArgsConstructor
 public class NotificationMapper {
 
+    private final ObjectMapper objectMapper;
+
+    private String serializePayloadToJson(Object payload) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException("Failed to serialize payload to JSON for auditing", e);
+        }
+    }
+
+    /**
+     * Maps the NotificationRequestAccepted event payload to a NotificationRequest JPA entity.
+     * It correctly serializes the full payload into a JSON string for auditing.
+     *
+     * @param payload The incoming event payload.
+     * @return A fully populated NotificationRequest entity, ready to be saved.
+     */
     public NotificationRequest toNotificationRequestEntity(NotificationRequestAccepted payload) {
         var request = new NotificationRequest();
         request.requestId(payload.requestId());
+        request.templateName(payload.templateName());
         request.source(payload.source());
         request.category(payload.category());
-        request.templateName(payload.templateName());
-        // For simplicity, serializing the whole payload. In a real scenario, you might use a library.
-        request.fullRequestPayload(payload.toString()); // TODO: Consider using a library.
+        request.fullRequestPayload(serializePayloadToJson(payload.fullRequestPayloadAsJson()));
         request.receivedAt(OffsetDateTime.now());
         return request;
     }
 
-    public IndividualNotification toIndividualNotificationEntity(
-            NotificationRequest request,
-            NotificationRequestAccepted.Recipient recipientPayload,
-            NotificationStatus initialStatus
-    ) {
 
-        var notification = new IndividualNotification();
-        notification.notificationRequest(request);
-        notification.recipientId(recipientPayload.id());
-        // Assuming SMS is the primary channel for now. A more complex system might have better logic.
-        notification.channelType(ChannelType.SMS); // TODO: Consider usage here.
-        notification.destinationAddress(recipientPayload.phone());
-        notification.currentStatus(initialStatus);
-        notification.createdAt(OffsetDateTime.now());
-        notification.updatedAt(OffsetDateTime.now());
-        return notification;
-    }
 
     public NotificationStatusHistory toHistoryEntity(
             IndividualNotification notification,

@@ -4,9 +4,9 @@ spring:
   rabbitmq:
     listener:
       simple:
-        concurrency: 5
-        max-concurrency: 10
-        prefetch: 10
+        concurrency: 50
+        max-concurrency: 100
+        prefetch: 25
   datasource:
     url: jdbc:postgresql://localhost:5432/notification_db
     username: postgres
@@ -20,3 +20,6 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  threads:
+    virtual:
+      enabled: true

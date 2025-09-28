@@ -4,22 +4,22 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import uz.tengebank.notificationcontracts.events.enums.ChannelType;
-import uz.tengebank.notificationcontracts.events.enums.NotificationStatus;
+import uz.tengebank.notificationcontracts.events.enums.IndividualNotificationStatus;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(
-        name = "notifications", schema = "audit",
+        name = "individual_notifications",
+        schema = "audit",
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_request_recipient",
                         columnNames = {"notification_request_id", "recipientId"}
                 )
-        },
-        indexes = {
-                @Index(name = "idx_recipient_id", columnList = "recipientId")
         }
 )
 @Getter @Setter
@@ -29,7 +29,7 @@ public class IndividualNotification {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "notification_request_id")
+    @JoinColumn(name = "notification_request_id", nullable = false)
     private NotificationRequest notificationRequest;
 
     @Column(nullable = false)
@@ -37,23 +37,14 @@ public class IndividualNotification {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ChannelType channelType;
-
-    @Column(nullable = false, length = 512)
-    private String destinationAddress;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private NotificationStatus currentStatus;
-
-    private String provider;
-
-    @Column(unique = true)
-    private String providerMessageId;
+    private IndividualNotificationStatus currentStatus;
 
     @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @Column(nullable = false)
     private OffsetDateTime updatedAt;
+
+    @OneToMany(mappedBy = "individualNotification", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<IndividualNotificationStatusHistory> statusHistory = new ArrayList<>();
 }

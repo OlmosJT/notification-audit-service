@@ -1,8 +1,12 @@
 package uz.tengebank.notificationauditservice.config;
 
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 
 
 @Configuration
@@ -15,6 +19,28 @@ public class RabbitMQConfig {
         public static final String QUEUE_EVENTS = "notification.events.queue";
         public static final String QUEUE_EVENTS_DLQ = "notification.events.dlq";
         public static final String ROUTING_KEY_EVENTS = "notification.#";
+    }
+
+    /**
+     * Creates a custom RabbitMQ listener container factory that uses virtual threads.
+     *
+     * @param configurer The auto-configuration helper.
+     * @param connectionFactory The AMQP connection factory.
+     * @return A configured SimpleRabbitListenerContainerFactory.
+     */
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            SimpleRabbitListenerContainerFactoryConfigurer configurer,
+            ConnectionFactory connectionFactory
+    ) {
+        var executor = new SimpleAsyncTaskExecutor("rabbit-vt-");
+        executor.setVirtualThreads(true);
+
+        var factory = new SimpleRabbitListenerContainerFactory();
+        configurer.configure(factory, connectionFactory);
+        factory.setTaskExecutor(executor);
+
+        return factory;
     }
 
     @Bean
