@@ -2,13 +2,13 @@ package uz.tengebank.notificationauditservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import uz.tengebank.notificationauditservice.entity.IndividualNotification;
+import uz.tengebank.notificationauditservice.entity.IndividualNotificationEntity;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface IndividualNotificationRepository extends JpaRepository<IndividualNotification, Long> {
+public interface IndividualNotificationRepository extends JpaRepository<IndividualNotificationEntity, Long> {
     /**
      * Finds a single notification by combining the parent request's UUID and the recipient's ID.
      * This is the CORRECT way to uniquely identify a single message within a batch.
@@ -17,7 +17,7 @@ public interface IndividualNotificationRepository extends JpaRepository<Individu
      * @param recipientId The ID of the individual recipient's message.
      * @return An Optional containing the IndividualNotification if found.
      */
-    Optional<IndividualNotification> findByNotificationRequestRequestIdAndRecipientId(UUID requestId, String recipientId);
+    Optional<IndividualNotificationEntity> findByNotificationRequestRequestIdAndRecipientId(UUID requestId, String recipientId);
 
 
     /**
@@ -27,5 +27,5 @@ public interface IndividualNotificationRepository extends JpaRepository<Individu
      * @param providerMessageId The unique ID from the external provider (e.g., Firebase, SMSTraffic).
      * @return An Optional containing the IndividualNotification if found.
      */
-    Optional<IndividualNotification> findByProviderMessageId(String providerMessageId);
+    Optional<IndividualNotificationEntity> findByProviderMessageId(String providerMessageId);
 }

@@ -9,21 +9,22 @@ public final class EventType {
 
     private EventType() {}
 
-    // GATEWAY Service Events
+    // NotificationRequest Level Events
     public static final String NOTIFICATION_REQUEST_ACCEPTED_V1 = "notification.request.accepted.v1";
     public static final String NOTIFICATION_REQUEST_REJECTED_V1 = "notification.request.rejected.v1";
-    public static final String NOTIFICATION_CHANNEL_ROUTED_V1 = "notification.channel.routed.v1";
+    public static final String NOTIFICATION_REQUEST_PROCESSING_V1 = "notification.request.processing.v1";
+    public static final String NOTIFICATION_REQUEST_FAILED_V1 = "notification.request.failed.v1";
+    public static final String NOTIFICATION_REQUEST_COMPLETED_V1 = "notification.request.completed.v1";
+    public static final String NOTIFICATION_REQUEST_PARTIALLY_COMPLETED_V1 = "notification.request.partially_completed.v1";
 
 
-    // Worker (notification-sms-service | notification-fsm-service) Service Events
-    public static final String NOTIFICATION_PROCESSING_STARTED_V1 = "notification.processing.started.v1";
-    public static final String NOTIFICATION_PROVIDER_ACCEPTED_V1 = "notification.provider.accepted.v1";
-    public static final String NOTIFICATION_PROVIDER_REJECTED_V1 = "notification.provider.rejected.v1";
-    public static final String NOTIFICATION_ATTEMPT_FAILED_V1 = "notification.attempt.failed.v1";
-
-
-    // WEBHOOK/CALLBACK Events
-    public static final String NOTIFICATION_DELIVERED_V1 = "notification.delivered.v1";
-    public static final String NOTIFICATION_UNDELIVERED_V1 = "notification.undelivered.v1";
+    // IndividualNotification Level Events
+    public static final String INDIVIDUAL_NOTIFICATION_ACCEPTED_V1 = "individual.notification.accepted.v1";
+    public static final String INDIVIDUAL_NOTIFICATION_ROUTED_V1 = "individual.notification.routed.v1";
+    public static final String INDIVIDUAL_NOTIFICATION_DISPATCHED_V1 = "individual.notification.dispatched.v1";
+    public static final String INDIVIDUAL_NOTIFICATION_DELIVERED_V1 = "individual.notification.delivered.v1";
+    public static final String INDIVIDUAL_NOTIFICATION_DELIVERY_FAILED_V1 = "individual.notification.delivery_failed.v1";
+    public static final String INDIVIDUAL_NOTIFICATION_INTERNAL_FAILURE_V1 = "individual.notification.internal_failure.v1";
+    public static final String INDIVIDUAL_NOTIFICATION_READ_V1 = "individual.notification.read.v1";
 
 }

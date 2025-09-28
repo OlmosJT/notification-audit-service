@@ -17,7 +17,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "notification_requests", schema = "audit")
 @Getter @Setter
-public class NotificationRequest {
+public class NotificationRequestEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,9 +56,9 @@ public class NotificationRequest {
     @Column(nullable = false, updatable = false)
     private OffsetDateTime receivedAt;
 
-    @OneToMany(mappedBy = "notificationRequest", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<IndividualNotification> individualNotifications = new ArrayList<>();
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<IndividualNotificationEntity> individualNotifications = new ArrayList<>();
 
-    @OneToMany(mappedBy = "notificationRequest", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<NotificationRequestStatusHistory> statusHistory = new ArrayList<>();
 }

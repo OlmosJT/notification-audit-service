@@ -5,12 +5,13 @@ import uz.tengebank.notificationcontracts.events.enums.ChannelType;
 import java.util.UUID;
 
 /**
- * Event published by a worker service immediately after consuming a message
- * from its queue, before any other processing.
+ * Emitted when a channel service successfully sends a message to a third-party vendor.
  */
-public record NotificationProcessingStarted(
+public record IndividualNotificationDispatched(
         UUID requestId,
         UUID recipientId,
         ChannelType channel,
-        String workerId
-) implements Payload {}
+        String provider,
+        String providerMessageId
+) implements Payload {
+}

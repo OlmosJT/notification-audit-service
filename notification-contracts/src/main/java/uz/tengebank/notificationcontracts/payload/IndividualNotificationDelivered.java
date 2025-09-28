@@ -2,16 +2,19 @@ package uz.tengebank.notificationcontracts.payload;
 
 import uz.tengebank.notificationcontracts.events.enums.ChannelType;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
- * Event published by the gateway after successfully placing a message
- * for a specific recipient and channel into its designated queue.
+ * Emitted based on a vendor webhook confirming successful delivery.
  */
-public record NotificationChannelRouted(
+public record IndividualNotificationDelivered(
         UUID requestId,
         UUID recipientId,
         ChannelType channel,
-        String queueName
+        String provider,
+        String providerMessageId,
+        OffsetDateTime deliveredAt
 ) implements Payload {
+
 }

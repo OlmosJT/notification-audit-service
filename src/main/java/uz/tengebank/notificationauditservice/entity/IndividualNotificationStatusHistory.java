@@ -17,7 +17,7 @@ public class IndividualNotificationStatusHistory {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "individual_notification_id", nullable = false)
-    private IndividualNotification individualNotification;
+    private IndividualNotificationEntity individualNotification;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

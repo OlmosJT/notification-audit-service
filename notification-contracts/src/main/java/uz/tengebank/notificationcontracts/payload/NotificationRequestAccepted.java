@@ -1,22 +1,12 @@
 package uz.tengebank.notificationcontracts.payload;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import uz.tengebank.notificationcontracts.events.enums.ChannelType;
-
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import uz.tengebank.notificationcontracts.dto.NotificationRequestDto;
 
 /**
- * Event published when a notification request is validated and accepted for processing.
+ * Emitted when a notification request is accepted for processing.
+ * The payload contains the full, original request for auditing.
  */
-public record NotificationRequestAccepted(
-        UUID requestId,
-        String source,
-        String category,
-        String templateName,
-        String fullRequestPayloadAsJson
+public record NotificationRequestAccepted (
+        NotificationRequestDto originalRequest
 ) implements Payload {
-
 }

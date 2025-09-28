@@ -5,9 +5,9 @@ import uz.tengebank.notificationcontracts.dto.FailureDetails;
 import java.util.UUID;
 
 /**
- * Emitted when a request is rejected before processing (e.g., validation failure).
+ * Emitted when a request fails catastrophically during processing.
  */
-public record NotificationRequestRejected (
+public record NotificationRequestFailed (
         UUID requestId,
         FailureDetails reason
 ) implements Payload {

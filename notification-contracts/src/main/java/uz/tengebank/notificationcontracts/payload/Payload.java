@@ -16,27 +16,35 @@ import uz.tengebank.notificationcontracts.events.EventType;
         property = "eventType"
 )
 @JsonSubTypes({
-        // Gateway Events
         @JsonSubTypes.Type(value = NotificationRequestAccepted.class, name = EventType.NOTIFICATION_REQUEST_ACCEPTED_V1),
         @JsonSubTypes.Type(value = NotificationRequestRejected.class, name = EventType.NOTIFICATION_REQUEST_REJECTED_V1),
-        @JsonSubTypes.Type(value = NotificationChannelRouted.class, name = EventType.NOTIFICATION_CHANNEL_ROUTED_V1),
-        // Worker Events
-        @JsonSubTypes.Type(value = NotificationProcessingStarted.class, name = EventType.NOTIFICATION_PROCESSING_STARTED_V1),
-        @JsonSubTypes.Type(value = NotificationProviderAccepted.class, name = EventType.NOTIFICATION_PROVIDER_ACCEPTED_V1),
-        @JsonSubTypes.Type(value = NotificationProviderRejected.class, name = EventType.NOTIFICATION_PROVIDER_REJECTED_V1),
-        @JsonSubTypes.Type(value = NotificationAttemptFailed.class, name = EventType.NOTIFICATION_ATTEMPT_FAILED_V1),
-        // Webhook Events
-        @JsonSubTypes.Type(value = NotificationDelivered.class, name = EventType.NOTIFICATION_DELIVERED_V1),
-        @JsonSubTypes.Type(value = NotificationUndelivered.class, name = EventType.NOTIFICATION_UNDELIVERED_V1)
+        @JsonSubTypes.Type(value = NotificationRequestProcessing.class, name = EventType.NOTIFICATION_REQUEST_PROCESSING_V1),
+        @JsonSubTypes.Type(value = NotificationRequestFailed.class, name = EventType.NOTIFICATION_REQUEST_FAILED_V1),
+        @JsonSubTypes.Type(value = NotificationRequestCompleted.class, name = EventType.NOTIFICATION_REQUEST_COMPLETED_V1),
+        @JsonSubTypes.Type(value = NotificationRequestPartiallyCompleted.class, name = EventType.NOTIFICATION_REQUEST_PARTIALLY_COMPLETED_V1),
+
+        @JsonSubTypes.Type(value = IndividualNotificationAccepted.class, name = EventType.INDIVIDUAL_NOTIFICATION_ACCEPTED_V1),
+        @JsonSubTypes.Type(value = IndividualNotificationRouted.class, name = EventType.INDIVIDUAL_NOTIFICATION_ROUTED_V1),
+        @JsonSubTypes.Type(value = IndividualNotificationDispatched.class, name = EventType.INDIVIDUAL_NOTIFICATION_DISPATCHED_V1),
+        @JsonSubTypes.Type(value = IndividualNotificationDelivered.class, name = EventType.INDIVIDUAL_NOTIFICATION_DELIVERED_V1),
+        @JsonSubTypes.Type(value = IndividualNotificationDeliveryFailed.class, name = EventType.INDIVIDUAL_NOTIFICATION_DELIVERY_FAILED_V1),
+        @JsonSubTypes.Type(value = IndividualNotificationInternalFailure.class, name = EventType.INDIVIDUAL_NOTIFICATION_INTERNAL_FAILURE_V1),
+        @JsonSubTypes.Type(value = IndividualNotificationRead.class, name = EventType.INDIVIDUAL_NOTIFICATION_READ_V1),
 })
 public sealed interface Payload permits
         NotificationRequestAccepted,
         NotificationRequestRejected,
-        NotificationChannelRouted,
-        NotificationProcessingStarted,
-        NotificationProviderAccepted,
-        NotificationProviderRejected,
-        NotificationAttemptFailed,
-        NotificationDelivered,
-        NotificationUndelivered {
+        NotificationRequestProcessing,
+        NotificationRequestFailed,
+        NotificationRequestCompleted,
+        NotificationRequestPartiallyCompleted,
+
+        IndividualNotificationAccepted,
+        IndividualNotificationRouted,
+        IndividualNotificationDispatched,
+        IndividualNotificationDelivered,
+        IndividualNotificationDeliveryFailed,
+        IndividualNotificationInternalFailure,
+        IndividualNotificationRead {
 }
+

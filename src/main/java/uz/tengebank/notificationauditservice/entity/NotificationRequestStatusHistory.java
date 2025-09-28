@@ -1,12 +1,15 @@
 package uz.tengebank.notificationauditservice.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import uz.tengebank.notificationcontracts.events.enums.NotificationRequestStatus;
 
 import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "request_status_history", schema = "audit")
+@Getter @Setter
 public class NotificationRequestStatusHistory {
 
     @Id
@@ -15,7 +18,7 @@ public class NotificationRequestStatusHistory {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "notification_request_id", nullable = false)
-    private NotificationRequest notificationRequest;
+    private NotificationRequestEntity request;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
