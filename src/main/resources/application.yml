@@ -12,6 +12,7 @@ spring:
         concurrency: 50
         max-concurrency: 100
         prefetch: 25
+        acknowledge-mode: manual
   # Datasource Configuration
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/notification_db}

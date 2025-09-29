@@ -3,6 +3,8 @@ package uz.tengebank.notificationauditservice.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import uz.tengebank.notificationauditservice.entity.converter.ChannelTypeSetConverter;
 import uz.tengebank.notificationcontracts.events.enums.AudienceStrategy;
 import uz.tengebank.notificationcontracts.events.enums.ChannelType;
@@ -47,9 +49,11 @@ public class NotificationRequestEntity {
     @Column(name = "channels", nullable = false)
     private EnumSet<ChannelType> channels;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "channel_params", columnDefinition = "jsonb")
     private String channelParams;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     private String fullRequestPayload;
 

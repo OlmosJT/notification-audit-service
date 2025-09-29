@@ -1,9 +1,9 @@
 package uz.tengebank.notificationcontracts.events;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.*;
 import uz.tengebank.notificationcontracts.payload.Payload;
+import uz.tengebank.notificationcontracts.utils.EventEnvelopeDeserializer;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -16,6 +16,10 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonDeserialize(using = EventEnvelopeDeserializer.class)
 public class EventEnvelope {
 
     /**

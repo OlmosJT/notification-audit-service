@@ -644,7 +644,7 @@ public class NotificationAuditService {
 
         // 2. Create the initial status history for the parent request
         var requestHistory = new NotificationRequestStatusHistory();
-        requestHistory.request(requestEntity) // Link to parent
+        requestHistory.request(requestEntity)
                 .status(NotificationRequestStatus.ACCEPTED)
                 .sourceService(sourceService)
                 .details(toJson(Map.of("info", "Request accepted for processing.")))
@@ -652,27 +652,29 @@ public class NotificationAuditService {
 
         requestEntity.statusHistory().add(requestHistory);
 
-        // 3. Conditionally create records for each recipient
         if (requestDto.audienceStrategy() == AudienceStrategy.DIRECT || requestDto.audienceStrategy() == AudienceStrategy.GROUP) {
-
             for (NotificationRequestDto.Recipient recipientDto : requestDto.recipients()) {
-                var individualEntity = new IndividualNotificationEntity();
-                individualEntity.request(requestEntity)
-                        .recipientId(recipientDto.id())
-                        .currentStatus(IndividualNotificationStatus.ACCEPTED)
-                        .createdAt(OffsetDateTime.now())
-                        .updatedAt(OffsetDateTime.now());
+                for (var channelEntry : recipientDto.channelAddresses().entrySet()) {
+                    var individualEntity = new IndividualNotificationEntity();
+                    individualEntity.request(requestEntity)
+                            .recipientId(recipientDto.id())
+                            .channelType(channelEntry.getKey())
+                            .destinationAddress(channelEntry.getValue())
+                            .currentStatus(IndividualNotificationStatus.ACCEPTED)
+                            .createdAt(OffsetDateTime.now())
+                            .updatedAt(OffsetDateTime.now());
 
-                var individualHistory = new IndividualNotificationStatusHistory();
-                individualHistory.individualNotification(individualEntity)
-                        .status(IndividualNotificationStatus.ACCEPTED)
-                        .sourceService(sourceService)
-                        .details(toJson(Map.of("info", "Individual notification created.")))
-                        .occurredAt(OffsetDateTime.now());
+                    var individualHistory = new IndividualNotificationStatusHistory();
+                    individualHistory.individualNotification(individualEntity)
+                            .status(IndividualNotificationStatus.ACCEPTED)
+                            .sourceService(sourceService)
+                            .details(toJson(Map.of("info", "Individual notification created.")))
+                            .occurredAt(OffsetDateTime.now());
 
-                individualEntity.statusHistory().add(individualHistory);
+                    individualEntity.statusHistory().add(individualHistory);
 
-                requestEntity.individualNotifications().add(individualEntity);
+                    requestEntity.individualNotifications().add(individualEntity);
+                }
             }
         }
 

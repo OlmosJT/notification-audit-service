@@ -2,15 +2,20 @@ package uz.tengebank.notificationauditservice.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.rabbitmq.client.Channel;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.AmqpHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import uz.tengebank.notificationauditservice.config.RabbitMQConfig;
 import uz.tengebank.notificationauditservice.service.NotificationAuditService;
 import uz.tengebank.notificationcontracts.events.EventEnvelope;
+
+import java.io.IOException;
 
 @Slf4j
 @Component
@@ -24,33 +29,34 @@ public class NotificationEventListener {
     private final RabbitTemplate rabbitTemplate;
 
     @RabbitListener(queues = RabbitMQConfig.Constants.QUEUE_EVENTS)
-    public void handleEvent(Message message, EventEnvelope event) {
+    public void handleEvent(EventEnvelope event, Message message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) throws IOException {
         log.info("Received event: type={}, eventId={}", event.getEventType(), event.getEventId());
         try {
             auditService.processEvent(event);
+            channel.basicAck(tag, false);
         } catch (Exception e) {
             long retryCount = getRetryCount(message);
 
             if (retryCount >= MAX_RETRIES) {
                 log.error("Max retries ({}) reached for eventId={}. Sending to DLQ.", MAX_RETRIES, event.getEventId(), e);
-                throw new AmqpRejectAndDontRequeueException("Max retries reached", e);
+                channel.basicNack(tag, false, false);
             } else {
                 long nextAttempt = retryCount + 1;
                 long delay = (long) (Math.pow(5, retryCount) * 1000 * 2);
                 log.warn("Error processing eventId={}. Retrying in {}ms (attempt {})...",
                         event.getEventId(), delay, nextAttempt);
 
-                // FIX: Set our custom retry header and the delay header
                 MessageProperties props = message.getMessageProperties();
                 props.setHeader(RETRY_HEADER, nextAttempt);
                 props.setHeader("x-delay", delay);
 
-                // Re-publish the modified message to the delayed exchange
                 rabbitTemplate.convertAndSend(
                         RabbitMQConfig.Constants.EXCHANGE_NOTIFICATIONS,
                         props.getReceivedRoutingKey(),
                         message
                 );
+
+                channel.basicAck(tag, false);
             }
         }
     }

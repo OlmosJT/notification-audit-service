@@ -3,6 +3,8 @@ package uz.tengebank.notificationauditservice.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import uz.tengebank.notificationcontracts.events.enums.ChannelType;
 import uz.tengebank.notificationcontracts.events.enums.IndividualNotificationStatus;
 
@@ -48,6 +50,7 @@ public class IndividualNotificationEntity {
     @Column(nullable = false)
     private String destinationAddress;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String jobDetails;
 

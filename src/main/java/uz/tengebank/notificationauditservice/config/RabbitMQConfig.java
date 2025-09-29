@@ -20,7 +20,8 @@ import java.util.Map;
 public class RabbitMQConfig {
 
     public static final class Constants {
-        private Constants() {}
+        private Constants() {
+        }
 
         // --- Main Exchange and Queue ---
         public static final String EXCHANGE_NOTIFICATIONS = "notifications.exchange";
