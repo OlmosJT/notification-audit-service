@@ -12,7 +12,6 @@ import uz.tengebank.notificationauditservice.entity.NotificationRequestEntity;
 import uz.tengebank.notificationauditservice.entity.NotificationRequestStatusHistory;
 import uz.tengebank.notificationauditservice.repository.IndividualNotificationRepository;
 import uz.tengebank.notificationauditservice.repository.NotificationRequestRepository;
-import uz.tengebank.notificationauditservice.repository.NotificationStatusHistoryRepository;
 import uz.tengebank.notificationcontracts.dto.NotificationRequestDto;
 import uz.tengebank.notificationcontracts.dto.SingleNotificationJob;
 import uz.tengebank.notificationcontracts.events.EventEnvelope;
@@ -33,7 +32,6 @@ public class NotificationAuditService {
 
     private final NotificationRequestRepository requestRepository;
     private final IndividualNotificationRepository individualRepository;
-    private final NotificationStatusHistoryRepository historyRepository;
     private final ObjectMapper objectMapper;
 
 

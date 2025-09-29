@@ -1,12 +1,19 @@
 package uz.tengebank.notificationauditservice.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Configuration
@@ -15,70 +22,105 @@ public class RabbitMQConfig {
     public static final class Constants {
         private Constants() {}
 
+        // --- Main Exchange and Queue ---
         public static final String EXCHANGE_NOTIFICATIONS = "notifications.exchange";
         public static final String QUEUE_EVENTS = "notification.events.queue";
-        public static final String QUEUE_EVENTS_DLQ = "notification.events.dlq";
         public static final String ROUTING_KEY_EVENTS = "notification.#";
+
+        // --- Dead Letter Exchange and Queue ---
+        public static final String EXCHANGE_NOTIFICATIONS_DLX = "notifications.exchange.dlx";
+        public static final String QUEUE_EVENTS_DLQ = "notification.events.dlq";
+
     }
 
     /**
-     * Creates a custom RabbitMQ listener container factory that uses virtual threads.
-     *
-     * @param configurer The auto-configuration helper.
-     * @param connectionFactory The AMQP connection factory.
-     * @return A configured SimpleRabbitListenerContainerFactory.
+     * Creates a message converter that uses Jackson for JSON (de)serialization.
+     * This allows @RabbitListener methods to directly receive Java objects.
+     */
+    @Bean
+    public MessageConverter jackson2MessageConverter() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return new Jackson2JsonMessageConverter(objectMapper);
+    }
+
+    /**
+     * Creates a custom RabbitMQ listener container factory that uses virtual threads
+     * and is configured with the JSON message converter.
      */
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
             SimpleRabbitListenerContainerFactoryConfigurer configurer,
-            ConnectionFactory connectionFactory
-    ) {
+            ConnectionFactory connectionFactory,
+            MessageConverter messageConverter) {
+
         var executor = new SimpleAsyncTaskExecutor("rabbit-vt-");
         executor.setVirtualThreads(true);
 
         var factory = new SimpleRabbitListenerContainerFactory();
         configurer.configure(factory, connectionFactory);
         factory.setTaskExecutor(executor);
-
+        factory.setMessageConverter(messageConverter);
         return factory;
     }
 
+    /**
+     * The main queue for notification events. On unrecoverable failure, it will
+     * dead-letter messages to the dedicated DLX (Dead Letter Exchange).
+     */
+    @Bean
+    public Queue eventsQueue() {
+        return QueueBuilder.durable(Constants.QUEUE_EVENTS)
+                .withArgument("x-dead-letter-exchange", Constants.EXCHANGE_NOTIFICATIONS_DLX)
+                .build();
+    }
+
+    /**
+     * The final queue where messages that fail all processing attempts are sent.
+     */
     @Bean
     public Queue deadLetterQueue() {
         return new Queue(Constants.QUEUE_EVENTS_DLQ);
     }
 
     /**
-     * Defines the main queue for notification events.
-     * It's configured to route failed messages to the DLQ by setting the
-     * 'x-dead-letter-exchange' and 'x-dead-letter-routing-key' arguments.
+     * The main exchange using the delayed-message plugin. It behaves like a topic exchange.
      */
     @Bean
-    public Queue eventsQueue() {
-        return QueueBuilder.durable(Constants.QUEUE_EVENTS)
-                .withArgument("x-dead-letter-exchange", "")
-                .withArgument("x-dead-letter-routing-key", Constants.QUEUE_EVENTS_DLQ)
-                .build();
+    public CustomExchange notificationsExchange() {
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-delayed-type", "topic");
+        return new CustomExchange(Constants.EXCHANGE_NOTIFICATIONS, "x-delayed-message", true, false, args);
     }
 
     /**
-     * Defines the topic exchange that will receive all notification-related events.
+     * The Dead Letter Exchange (DLX). A simple Fanout exchange is perfect for this,
+     * as it will broadcast any message it receives to all queues bound to it (our DLQ).
      */
     @Bean
-    public TopicExchange notificationsExchange() {
-        return new TopicExchange(Constants.EXCHANGE_NOTIFICATIONS);
+    public FanoutExchange deadLetterExchange() {
+        return new FanoutExchange(Constants.EXCHANGE_NOTIFICATIONS_DLX);
     }
 
     /**
-     * Binds the main events queue to the notifications exchange. Any message published
-     * to the exchange with a routing key starting with "notification." will be
-     * sent to this queue.
+     * Binds the main events queue to the main notifications exchange.
      */
     @Bean
-    public Binding binding(Queue eventsQueue, TopicExchange notificationsExchange) {
+    public Binding binding(Queue eventsQueue, CustomExchange notificationsExchange) {
         return BindingBuilder
                 .bind(eventsQueue)
                 .to(notificationsExchange)
-                .with(Constants.ROUTING_KEY_EVENTS);
+                .with(Constants.ROUTING_KEY_EVENTS)
+                .noargs();
+    }
+
+    /**
+     * Binds the dead-letter queue to the dead-letter exchange.
+     */
+    @Bean
+    public Binding dlqBinding(Queue deadLetterQueue, FanoutExchange deadLetterExchange) {
+        return BindingBuilder
+                .bind(deadLetterQueue)
+                .to(deadLetterExchange);
     }
 }
