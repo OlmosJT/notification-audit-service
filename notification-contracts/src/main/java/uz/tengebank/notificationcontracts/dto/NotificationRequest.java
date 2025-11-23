@@ -3,9 +3,9 @@ package uz.tengebank.notificationcontracts.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import uz.tengebank.notificationcontracts.events.enums.ChannelType;
-import uz.tengebank.notificationcontracts.events.enums.Language;
-import uz.tengebank.notificationcontracts.events.enums.Priority;
+import uz.tengebank.notificationcontracts.dto.enums.ChannelType;
+import uz.tengebank.notificationcontracts.dto.enums.Language;
+import uz.tengebank.notificationcontracts.dto.enums.Priority;
 
 import java.time.LocalDateTime;
 import java.util.List;

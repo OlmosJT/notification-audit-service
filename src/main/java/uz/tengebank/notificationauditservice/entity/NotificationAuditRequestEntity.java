@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import uz.tengebank.notificationcontracts.events.enums.*;
+import uz.tengebank.notificationcontracts.dto.enums.ChannelType;
+import uz.tengebank.notificationcontracts.dto.enums.Language;
+import uz.tengebank.notificationcontracts.dto.enums.Priority;
 
 import java.time.LocalDateTime;
 import java.util.List;

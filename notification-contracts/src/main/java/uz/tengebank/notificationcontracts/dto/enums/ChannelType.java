@@ -1,4 +1,4 @@
-package uz.tengebank.notificationcontracts.events.enums;
+package uz.tengebank.notificationcontracts.dto.enums;
 
 import uz.tengebank.notificationcontracts.utils.NIY;
 

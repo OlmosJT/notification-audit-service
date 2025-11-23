@@ -2,9 +2,7 @@ package uz.tengebank.notificationauditservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import uz.tengebank.notificationcontracts.events.enums.IndividualNotificationStatus;
+import uz.tengebank.notificationcontracts.dto.enums.IndividualNotificationStatus;
 
 import java.time.OffsetDateTime;
 

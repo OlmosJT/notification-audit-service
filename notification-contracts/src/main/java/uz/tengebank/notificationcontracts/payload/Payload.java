@@ -4,26 +4,19 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import uz.tengebank.notificationcontracts.events.EventType;
 
-/**
- * A sealed marker interface for all event payloads.
- * This interface uses Jackson annotations to enable polymorphic deserialization,
- * allowing the event consumer to correctly map the JSON payload to the specific
- * Java object based on the 'eventType' field in the event envelope.
- */
-public sealed interface Payload permits
-        NotificationRequestAccepted,
-        NotificationRequestRejected,
-        NotificationRequestProcessing,
-        NotificationRequestFailed,
-        NotificationRequestCompleted,
-        NotificationRequestPartiallyCompleted,
+import java.util.UUID;
 
-        IndividualNotificationAccepted,
-        IndividualNotificationRouted,
-        IndividualNotificationDispatched,
-        IndividualNotificationDelivered,
-        IndividualNotificationDeliveryFailed,
-        IndividualNotificationInternalFailure,
-        IndividualNotificationRead {
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "payloadType"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = NotificationRequestPayload.class, name = "REQUEST"),
+        @JsonSubTypes.Type(value = NotificationDestinationPayload.class, name = "DESTINATION")
+})
+public sealed interface Payload permits NotificationRequestPayload, NotificationDestinationPayload {
+    UUID getReferenceId();
 }
 

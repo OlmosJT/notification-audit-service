@@ -1,4 +1,4 @@
-package uz.tengebank.notificationcontracts.events.enums;
+package uz.tengebank.notificationcontracts.dto.enums;
 
 /**
  * Represents the lifecycle of the HIGH-LEVEL Batch Request.

@@ -14,9 +14,11 @@ import uz.tengebank.notificationauditservice.repository.NotificationAuditDestina
 import uz.tengebank.notificationauditservice.repository.NotificationAuditRequest;
 import uz.tengebank.notificationcontracts.dto.NotificationRequest;
 import uz.tengebank.notificationcontracts.dto.SingleNotificationJob;
+import uz.tengebank.notificationcontracts.dto.enums.ChannelType;
+import uz.tengebank.notificationcontracts.dto.enums.IndividualNotificationStatus;
+import uz.tengebank.notificationcontracts.dto.enums.NotificationRequestStatus;
 import uz.tengebank.notificationcontracts.events.EventEnvelope;
 import uz.tengebank.notificationcontracts.events.EventType;
-import uz.tengebank.notificationcontracts.events.enums.*;
 import uz.tengebank.notificationcontracts.payload.*;
 
 import java.time.OffsetDateTime;

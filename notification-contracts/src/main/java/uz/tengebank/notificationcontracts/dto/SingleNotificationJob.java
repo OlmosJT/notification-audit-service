@@ -1,6 +1,6 @@
 package uz.tengebank.notificationcontracts.dto;
 
-import uz.tengebank.notificationcontracts.events.enums.ChannelType;
+import uz.tengebank.notificationcontracts.dto.enums.ChannelType;
 
 import java.util.Map;
 import java.util.UUID;

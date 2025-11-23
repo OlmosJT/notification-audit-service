@@ -1,4 +1,4 @@
-package uz.tengebank.notificationcontracts.events.enums;
+package uz.tengebank.notificationcontracts.dto.enums;
 
 /**
  * Represents the granular lifecycle status of a single notification sent to one recipient.
