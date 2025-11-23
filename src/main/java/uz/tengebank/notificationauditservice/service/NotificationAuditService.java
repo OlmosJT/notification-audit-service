@@ -12,7 +12,7 @@ import uz.tengebank.notificationauditservice.entity.NotificationRequestEntity;
 import uz.tengebank.notificationauditservice.entity.NotificationRequestStatusHistory;
 import uz.tengebank.notificationauditservice.repository.IndividualNotificationRepository;
 import uz.tengebank.notificationauditservice.repository.NotificationRequestRepository;
-import uz.tengebank.notificationcontracts.dto.NotificationRequestDto;
+import uz.tengebank.notificationcontracts.dto.NotificationRequest;
 import uz.tengebank.notificationcontracts.dto.SingleNotificationJob;
 import uz.tengebank.notificationcontracts.events.EventEnvelope;
 import uz.tengebank.notificationcontracts.events.EventType;
@@ -620,7 +620,7 @@ public class NotificationAuditService {
      * @param sourceService The service that published the event.
      */
     private void handleRequestAccepted(NotificationRequestAccepted payload, String sourceService) {
-        NotificationRequestDto requestDto = payload.originalRequest();
+        NotificationRequest requestDto = payload.originalRequest();
         UUID requestId = requestDto.requestId();
 
         if (requestRepository.findByRequestId(requestId).isPresent()) {
@@ -653,7 +653,7 @@ public class NotificationAuditService {
         requestEntity.statusHistory().add(requestHistory);
 
         if (requestDto.audienceStrategy() == AudienceStrategy.DIRECT || requestDto.audienceStrategy() == AudienceStrategy.GROUP) {
-            for (NotificationRequestDto.Recipient recipientDto : requestDto.recipients()) {
+            for (NotificationRequest.Destination recipientDto : requestDto.recipients()) {
                 for (var channelEntry : recipientDto.channelAddresses().entrySet()) {
                     var individualEntity = new IndividualNotificationEntity();
                     individualEntity.request(requestEntity)

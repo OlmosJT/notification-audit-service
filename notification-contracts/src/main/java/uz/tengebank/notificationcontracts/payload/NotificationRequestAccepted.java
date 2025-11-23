@@ -1,12 +1,12 @@
 package uz.tengebank.notificationcontracts.payload;
 
-import uz.tengebank.notificationcontracts.dto.NotificationRequestDto;
+import uz.tengebank.notificationcontracts.dto.NotificationRequest;
 
 /**
  * Emitted when a notification request is accepted for processing.
  * The payload contains the full, original request for auditing.
  */
 public record NotificationRequestAccepted (
-        NotificationRequestDto originalRequest
+        NotificationRequest originalRequest
 ) implements Payload {
 }
