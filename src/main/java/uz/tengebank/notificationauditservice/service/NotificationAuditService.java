@@ -6,12 +6,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uz.tengebank.notificationauditservice.entity.IndividualNotificationEntity;
-import uz.tengebank.notificationauditservice.entity.IndividualNotificationStatusHistory;
-import uz.tengebank.notificationauditservice.entity.NotificationRequestEntity;
-import uz.tengebank.notificationauditservice.entity.NotificationRequestStatusHistory;
-import uz.tengebank.notificationauditservice.repository.IndividualNotificationRepository;
-import uz.tengebank.notificationauditservice.repository.NotificationRequestRepository;
+import uz.tengebank.notificationauditservice.entity.NotificationAuditDestinationEntity;
+import uz.tengebank.notificationauditservice.entity.NotificationDestinationHistoryEntity;
+import uz.tengebank.notificationauditservice.entity.NotificationAuditRequestEntity;
+import uz.tengebank.notificationauditservice.entity.NotificationRequestHistoryEntity;
+import uz.tengebank.notificationauditservice.repository.NotificationAuditDestination;
+import uz.tengebank.notificationauditservice.repository.NotificationAuditRequest;
 import uz.tengebank.notificationcontracts.dto.NotificationRequest;
 import uz.tengebank.notificationcontracts.dto.SingleNotificationJob;
 import uz.tengebank.notificationcontracts.events.EventEnvelope;
@@ -30,8 +30,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class NotificationAuditService {
 
-    private final NotificationRequestRepository requestRepository;
-    private final IndividualNotificationRepository individualRepository;
+    private final NotificationAuditRequest requestRepository;
+    private final NotificationAuditDestination individualRepository;
     private final ObjectMapper objectMapper;
 
 
@@ -98,7 +98,7 @@ public class NotificationAuditService {
                 .updatedAt(payload.readAt());
 
         // 4. Create the new status history record
-        var individualHistory = new IndividualNotificationStatusHistory();
+        var individualHistory = new NotificationDestinationHistoryEntity();
         individualHistory.individualNotification(individualEntity)
                 .status(IndividualNotificationStatus.READ)
                 .sourceService(sourceService)
@@ -142,7 +142,7 @@ public class NotificationAuditService {
                 .updatedAt(OffsetDateTime.now());
 
         // 4. Create the new status history record
-        var individualHistory = new IndividualNotificationStatusHistory();
+        var individualHistory = new NotificationDestinationHistoryEntity();
         individualHistory.individualNotification(individualEntity)
                 .status(IndividualNotificationStatus.INTERNAL_FAILURE)
                 .sourceService(sourceService)
@@ -185,7 +185,7 @@ public class NotificationAuditService {
                 .updatedAt(OffsetDateTime.now());
 
         // 4. Create the new status history record
-        var individualHistory = new IndividualNotificationStatusHistory();
+        var individualHistory = new NotificationDestinationHistoryEntity();
         individualHistory.individualNotification(individualEntity)
                 .status(IndividualNotificationStatus.DELIVERY_FAILED)
                 .sourceService(sourceService)
@@ -227,7 +227,7 @@ public class NotificationAuditService {
                 .updatedAt(payload.deliveredAt());
 
         // 4. Create the new status history record
-        var individualHistory = new IndividualNotificationStatusHistory();
+        var individualHistory = new NotificationDestinationHistoryEntity();
         individualHistory.individualNotification(individualEntity) // Link to parent
                 .status(IndividualNotificationStatus.DELIVERED)
                 .sourceService(sourceService)
@@ -276,7 +276,7 @@ public class NotificationAuditService {
                 .updatedAt(OffsetDateTime.now());
 
         // 4. Create the new status history record
-        var individualHistory = new IndividualNotificationStatusHistory();
+        var individualHistory = new NotificationDestinationHistoryEntity();
         individualHistory.individualNotification(individualEntity)
                 .status(IndividualNotificationStatus.DISPATCHED)
                 .sourceService(sourceService)
@@ -324,7 +324,7 @@ public class NotificationAuditService {
                 .updatedAt(OffsetDateTime.now());
 
         // 4. Create the new status history record
-        var individualHistory = new IndividualNotificationStatusHistory();
+        var individualHistory = new NotificationDestinationHistoryEntity();
         individualHistory.individualNotification(individualEntity)
                 .status(IndividualNotificationStatus.ROUTED)
                 .sourceService(sourceService)
@@ -364,7 +364,7 @@ public class NotificationAuditService {
                 ));
 
         // 3. Create the new IndividualNotificationEntity
-        var individualEntity = new IndividualNotificationEntity();
+        var individualEntity = new NotificationAuditDestinationEntity();
         individualEntity.request(requestEntity)
                 .recipientId(recipientId)
                 .channelType(job.channel())
@@ -378,7 +378,7 @@ public class NotificationAuditService {
                 .updatedAt(OffsetDateTime.now());
 
         // 4. Create its initial status history record
-        var individualHistory = new IndividualNotificationStatusHistory();
+        var individualHistory = new NotificationDestinationHistoryEntity();
         individualHistory.individualNotification(individualEntity)
                 .status(IndividualNotificationStatus.ACCEPTED)
                 .sourceService(sourceService)
@@ -412,8 +412,8 @@ public class NotificationAuditService {
 
         // 2. Idempotency Check: Ignore if already in a terminal state.
         var latestStatus = requestEntity.statusHistory().stream()
-                .max(Comparator.comparing(NotificationRequestStatusHistory::occurredAt))
-                .map(NotificationRequestStatusHistory::status)
+                .max(Comparator.comparing(NotificationRequestHistoryEntity::occurredAt))
+                .map(NotificationRequestHistoryEntity::status)
                 .orElse(null);
 
         if (isTerminal(latestStatus)) {
@@ -456,7 +456,7 @@ public class NotificationAuditService {
         }
 
         // 4. Create the final status history record for the parent request.
-        var requestHistory = new NotificationRequestStatusHistory();
+        var requestHistory = new NotificationRequestHistoryEntity();
         requestHistory.request(requestEntity) // Link to parent
                 .status(finalStatus)
                 .sourceService(sourceService)
@@ -489,8 +489,8 @@ public class NotificationAuditService {
 
         // 2. Idempotency Check: Get the latest status to prevent invalid transitions.
         var latestStatus = requestEntity.statusHistory().stream()
-                .max(Comparator.comparing(NotificationRequestStatusHistory::occurredAt))
-                .map(NotificationRequestStatusHistory::status)
+                .max(Comparator.comparing(NotificationRequestHistoryEntity::occurredAt))
+                .map(NotificationRequestHistoryEntity::status)
                 .orElse(null);
 
         if (latestStatus == NotificationRequestStatus.FAILED ||
@@ -509,7 +509,7 @@ public class NotificationAuditService {
                 individualEntity.updatedAt(OffsetDateTime.now());
 
                 // Add a corresponding history record for the individual failure
-                var individualHistory = new IndividualNotificationStatusHistory();
+                var individualHistory = new NotificationDestinationHistoryEntity();
                 individualHistory.individualNotification(individualEntity)
                         .status(IndividualNotificationStatus.INTERNAL_FAILURE)
                         .sourceService(sourceService)
@@ -520,7 +520,7 @@ public class NotificationAuditService {
         }
 
         // 4. Create the final FAILED status history record for the parent request.
-        var requestHistory = new NotificationRequestStatusHistory();
+        var requestHistory = new NotificationRequestHistoryEntity();
         requestHistory.request(requestEntity) // Link to parent
                 .status(NotificationRequestStatus.FAILED)
                 .sourceService(sourceService)
@@ -551,8 +551,8 @@ public class NotificationAuditService {
 
         // 2. Idempotency Check: Get the latest status to prevent invalid transitions.
         var latestStatus = requestEntity.statusHistory().stream()
-                .max(Comparator.comparing(NotificationRequestStatusHistory::occurredAt))
-                .map(NotificationRequestStatusHistory::status)
+                .max(Comparator.comparing(NotificationRequestHistoryEntity::occurredAt))
+                .map(NotificationRequestHistoryEntity::status)
                 .orElse(null);
 
         if (latestStatus == NotificationRequestStatus.PROCESSING || latestStatus == NotificationRequestStatus.COMPLETED ||
@@ -562,7 +562,7 @@ public class NotificationAuditService {
         }
 
         // 3. Create the new status history record
-        var requestHistory = new NotificationRequestStatusHistory();
+        var requestHistory = new NotificationRequestHistoryEntity();
         requestHistory.request(requestEntity) // Link to parent
                 .status(NotificationRequestStatus.PROCESSING)
                 .sourceService(sourceService)
@@ -599,7 +599,7 @@ public class NotificationAuditService {
         }
 
         // Create the new status history record for the rejection
-        var requestHistory = new NotificationRequestStatusHistory();
+        var requestHistory = new NotificationRequestHistoryEntity();
         requestHistory.request(requestEntity)
                 .status(NotificationRequestStatus.REJECTED)
                 .sourceService(sourceService)
@@ -629,7 +629,7 @@ public class NotificationAuditService {
         }
 
         // 1. Create and populate the main NotificationRequestEntity
-        var requestEntity = new NotificationRequestEntity();
+        var requestEntity = new NotificationAuditRequestEntity();
         requestEntity
                 .requestId(requestDto.requestId())
                 .source(requestDto.source())
@@ -643,7 +643,7 @@ public class NotificationAuditService {
                 .receivedAt(OffsetDateTime.now());
 
         // 2. Create the initial status history for the parent request
-        var requestHistory = new NotificationRequestStatusHistory();
+        var requestHistory = new NotificationRequestHistoryEntity();
         requestHistory.request(requestEntity)
                 .status(NotificationRequestStatus.ACCEPTED)
                 .sourceService(sourceService)
@@ -655,7 +655,7 @@ public class NotificationAuditService {
         if (requestDto.audienceStrategy() == AudienceStrategy.DIRECT || requestDto.audienceStrategy() == AudienceStrategy.GROUP) {
             for (NotificationRequest.Destination recipientDto : requestDto.recipients()) {
                 for (var channelEntry : recipientDto.channelAddresses().entrySet()) {
-                    var individualEntity = new IndividualNotificationEntity();
+                    var individualEntity = new NotificationAuditDestinationEntity();
                     individualEntity.request(requestEntity)
                             .recipientId(recipientDto.id())
                             .channelType(channelEntry.getKey())
@@ -664,7 +664,7 @@ public class NotificationAuditService {
                             .createdAt(OffsetDateTime.now())
                             .updatedAt(OffsetDateTime.now());
 
-                    var individualHistory = new IndividualNotificationStatusHistory();
+                    var individualHistory = new NotificationDestinationHistoryEntity();
                     individualHistory.individualNotification(individualEntity)
                             .status(IndividualNotificationStatus.ACCEPTED)
                             .sourceService(sourceService)
@@ -691,9 +691,9 @@ public class NotificationAuditService {
      * an ACCEPTED event with the full DTO, followed by a REJECTED event. This avoids
      * creating placeholder data in the audit service.
      */
-    private NotificationRequestEntity createMinimalRejectedRequest(UUID requestId, NotificationRequestRejected payload) {
+    private NotificationAuditRequestEntity createMinimalRejectedRequest(UUID requestId, NotificationRequestRejected payload) {
         log.warn("Creating minimal request for rejected requestId='{}'. Full request data was not available.", requestId);
-        var entity = new NotificationRequestEntity();
+        var entity = new NotificationAuditRequestEntity();
         entity.requestId(requestId)
                 .source("UNKNOWN") // Placeholder
                 .category("UNKNOWN") // Placeholder

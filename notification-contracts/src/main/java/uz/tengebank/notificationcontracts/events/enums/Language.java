@@ -2,6 +2,7 @@ package uz.tengebank.notificationcontracts.events.enums;
 
 import lombok.Getter;
 
+@Getter
 public enum Language {
     EN("English"),
     UZ("Uzbek"),
@@ -12,10 +13,6 @@ public enum Language {
 
     Language(String description) {
         this.description = description;
-    }
-
-    public String getDescription() {
-        return description;
     }
 
 

@@ -1,0 +1,57 @@
+CREATE TABLE notification_audit_requests (
+    request_id UUID PRIMARY KEY,
+    channel VARCHAR(20) NOT NULL,        -- SMS, EMAIL, PUSH
+    template_code VARCHAR(100) NOT NULL, -- 'LATE_PAYMENT_ALERT'
+    language VARCHAR(5) NOT NULL,        -- 'uz', 'en', 'ru'
+
+    -- Metadata Fields (Flattened for easier querying)
+
+    source_system VARCHAR(50) NOT NULL,  -- 'loan-service'
+    priority VARCHAR(20) NOT NULL,       -- 'HIGH', 'NORMAL'
+    is_batch BOOLEAN DEFAULT FALSE,
+    schedule_at TIMESTAMP,               -- Nullable, if scheduled
+    ttl_seconds INTEGER,
+    callback_url VARCHAR(255),
+
+    -- Retry Policy (Flattened)
+    retry_max_attempts INTEGER,
+    retry_delay_seconds INTEGER,
+
+    -- Tags (Stored as an Array in Postgres for easy searching)
+    tags TEXT[],
+
+    -- Audit Info (When this record was inserted)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index for fast lookups by source system and date
+CREATE INDEX idx_audit_req_source_date ON notification_audit_requests(source_system, created_at);
+
+--- CHILD TABLE ---
+
+CREATE TABLE notification_audit_destinations (
+    id BIGSERIAL PRIMARY KEY,
+
+    -- Foreign Key linking to the main request
+    request_id UUID NOT NULL REFERENCES notification_audit_requests(request_id),
+
+    -- The specific ID for this recipient provided in the DTO
+    destination_id UUID NOT NULL,
+
+    -- Contact Details (Indexed for search)
+    phone VARCHAR(20),
+    email VARCHAR(255),
+    push_token TEXT, -- Tokens can be long, use TEXT
+
+    -- Dynamic Template Variables
+    -- We use JSONB to store the Map<String, Object> so it is queryable
+    template_variables JSONB,
+
+    -- Status (Optional: Valid to add this to the audit table later)
+    status VARCHAR(20) DEFAULT 'RECEIVED' -- RECEIVED, SENT, FAILED
+);
+
+-- CRITICAL INDEX: Allows customer support to say "Show me all SMS sent to +998..."
+CREATE INDEX idx_audit_dest_phone ON notification_audit_destinations(phone);
+CREATE INDEX idx_audit_dest_email ON notification_audit_destinations(email);
+CREATE INDEX idx_audit_dest_req_id ON notification_audit_destinations(request_id);

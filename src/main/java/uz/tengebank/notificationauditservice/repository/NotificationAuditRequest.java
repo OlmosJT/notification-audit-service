@@ -2,13 +2,13 @@ package uz.tengebank.notificationauditservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import uz.tengebank.notificationauditservice.entity.NotificationRequestEntity;
+import uz.tengebank.notificationauditservice.entity.NotificationAuditRequestEntity;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface NotificationRequestRepository extends JpaRepository<NotificationRequestEntity, Long> {
+public interface NotificationAuditRequest extends JpaRepository<NotificationAuditRequestEntity, Long> {
     /**
      * Finds a notification request by its unique, client-provided request ID.
      * This is the primary way to look up a batch request.
@@ -16,5 +16,5 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
      * @param requestId The UUID of the batch request.
      * @return An Optional containing the NotificationRequest if found.
      */
-    Optional<NotificationRequestEntity> findByRequestId(UUID requestId);
+    Optional<NotificationAuditRequestEntity> findByRequestId(UUID requestId);
 }

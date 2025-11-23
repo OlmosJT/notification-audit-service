@@ -40,6 +40,14 @@ public enum IndividualNotificationStatus {
      * An optional, later state after DELIVERY. Indicates that the user has
      * interacted with the notification (e.g., opened the push notification, clicked a link in the email).
      */
-    READ
+    READ,
+    /**
+     * TTL exceeded before sending
+     */
+    EXPIRED,
+    /**
+     * Scheduled message stopped manually
+     */
+    CANCELED
 
 }
