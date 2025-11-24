@@ -1,18 +1,27 @@
 package uz.tengebank.notificationauditservice.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "notification_audit_destinations", schema = "audit")
+@Table(
+        name = "notification_audit_destinations",
+        schema = "audit",
+        indexes = {
+                @Index(name = "idx_audit_dest_destination_id", columnList = "destination_id"),
+                @Index(name = "idx_audit_dest_request_id", columnList = "request_id")
+        },
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_destination_request",
+                columnNames = {"request_id", "destination_id"}
+        )
+)
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter @Setter
@@ -22,9 +31,10 @@ public class NotificationAuditDestinationEntity {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "request_id")
+    @JoinColumn(name = "request_id", nullable = false)
     private NotificationAuditRequestEntity request;
 
+    @Column(nullable = false)
     private UUID destinationId;
 
     private String phone;
@@ -34,4 +44,20 @@ public class NotificationAuditDestinationEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> templateVariables;
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NotificationAuditDestinationEntity that)) return false;
+        return Objects.equals(destinationId, that.destinationId) &&
+                Objects.equals(request != null ? request.getRequestId() : null,
+                        that.request != null ? that.request.getRequestId() : null);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(destinationId, request != null ? request.getRequestId() : null);
+    }
+
 }

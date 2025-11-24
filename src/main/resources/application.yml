@@ -11,7 +11,7 @@ spring:
       simple:
         concurrency: 50
         max-concurrency: 100
-        prefetch: 25
+        prefetch: 50
         acknowledge-mode: manual
   # Datasource Configuration
   datasource:

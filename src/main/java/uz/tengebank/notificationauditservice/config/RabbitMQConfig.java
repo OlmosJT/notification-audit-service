@@ -1,10 +1,13 @@
 package uz.tengebank.notificationauditservice.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
@@ -15,7 +18,7 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import java.util.HashMap;
 import java.util.Map;
 
-
+@Slf4j
 @Configuration
 public class RabbitMQConfig {
 
@@ -42,7 +45,12 @@ public class RabbitMQConfig {
     public MessageConverter jackson2MessageConverter() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        return new Jackson2JsonMessageConverter(objectMapper);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
+        DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
+        typeMapper.setTrustedPackages("uz.tengebank.notificationcontracts", "uz.tengebank.notificationcontracts.*");
+        converter.setJavaTypeMapper(typeMapper);
+        return converter;
     }
 
     /**
@@ -53,16 +61,39 @@ public class RabbitMQConfig {
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
             SimpleRabbitListenerContainerFactoryConfigurer configurer,
             ConnectionFactory connectionFactory,
-            MessageConverter messageConverter) {
-
-        var executor = new SimpleAsyncTaskExecutor("rabbit-vt-");
-        executor.setVirtualThreads(true);
+            MessageConverter messageConverter
+    ) {
 
         var factory = new SimpleRabbitListenerContainerFactory();
         configurer.configure(factory, connectionFactory);
+
+        var executor = new SimpleAsyncTaskExecutor("rabbit-vt-");
+        executor.setVirtualThreads(true);
         factory.setTaskExecutor(executor);
         factory.setMessageConverter(messageConverter);
+
+        log.info("==========================================================");
+        log.info("🐰 RABBITMQ LISTENER FACTORY CONFIGURATION");
+        log.info("==========================================================");
+        log.info("Task Executor      : {} (Virtual Threads Enabled)", executor.getClass().getSimpleName());
+        log.info("Thread Prefix      : {}", executor.getThreadNamePrefix());
+        log.info("Acknowledge Mode   : MANUAL (Applies to @RabbitListener)");
+        log.info("Prefetch Count     : 50 (Messages per consumer)");
+        log.info("Message Converter  : Jackson2JsonMessageConverter");
+        log.info("Trusted Packages   : uz.tengebank.notificationcontracts.*");
+        log.info("==========================================================");
+
         return factory;
+    }
+
+    /**
+     * The main exchange using the delayed-message plugin. It behaves like a topic exchange.
+     */
+    @Bean
+    public CustomExchange notificationsExchange() {
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-delayed-type", "topic");
+        return new CustomExchange(Constants.EXCHANGE_NOTIFICATIONS, "x-delayed-message", true, false, args);
     }
 
     /**
@@ -84,15 +115,7 @@ public class RabbitMQConfig {
         return new Queue(Constants.QUEUE_EVENTS_DLQ);
     }
 
-    /**
-     * The main exchange using the delayed-message plugin. It behaves like a topic exchange.
-     */
-    @Bean
-    public CustomExchange notificationsExchange() {
-        Map<String, Object> args = new HashMap<>();
-        args.put("x-delayed-type", "topic");
-        return new CustomExchange(Constants.EXCHANGE_NOTIFICATIONS, "x-delayed-message", true, false, args);
-    }
+
 
     /**
      * The Dead Letter Exchange (DLX). A simple Fanout exchange is perfect for this,

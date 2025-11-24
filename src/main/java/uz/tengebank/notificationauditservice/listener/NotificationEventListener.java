@@ -24,40 +24,45 @@ public class NotificationEventListener {
 
     private static final int MAX_RETRIES = 3;
     private static final String RETRY_HEADER = "x-retry-count";
+    private static final String DELAY_HEADER = "x-delay";
 
     private final NotificationAuditService auditService;
     private final RabbitTemplate rabbitTemplate;
 
     @RabbitListener(queues = RabbitMQConfig.Constants.QUEUE_EVENTS)
     public void handleEvent(EventEnvelope event, Message message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) throws IOException {
-        log.info("Received event: type={}, eventId={}", event.getEventType(), event.getEventId());
         try {
+            log.info("Received event: type={}, eventId={}", event.getEventType(), event.getEventId());
             auditService.processEvent(event);
             channel.basicAck(tag, false);
         } catch (Exception e) {
-            long retryCount = getRetryCount(message);
+            handleFailure(message, channel, tag, event, e);
+        }
+    }
 
-            if (retryCount >= MAX_RETRIES) {
-                log.error("Max retries ({}) reached for eventId={}. Sending to DLQ.", MAX_RETRIES, event.getEventId(), e);
-                channel.basicNack(tag, false, false);
-            } else {
-                long nextAttempt = retryCount + 1;
-                long delay = (long) (Math.pow(5, retryCount) * 1000 * 2);
-                log.warn("Error processing eventId={}. Retrying in {}ms (attempt {})...",
-                        event.getEventId(), delay, nextAttempt);
+    private void handleFailure(Message message, Channel channel, long tag, EventEnvelope event, Exception e) throws IOException {
+        long retryCount = getRetryCount(message);
 
-                MessageProperties props = message.getMessageProperties();
-                props.setHeader(RETRY_HEADER, nextAttempt);
-                props.setHeader("x-delay", delay);
+        if (retryCount >= MAX_RETRIES) {
+            log.error("Max retries ({}) reached for eventId={}. Sending to DLQ.", MAX_RETRIES, event.getEventId(), e);
+            channel.basicNack(tag, false, false);
+        } else {
+            long nextAttempt = retryCount + 1;
+            long delay = (long) (Math.pow(5, retryCount) * 1000 * 2);
+            log.warn("Error processing eventId={}. Retrying in {}ms (attempt {})...",
+                    event.getEventId(), delay, nextAttempt);
 
-                rabbitTemplate.convertAndSend(
-                        RabbitMQConfig.Constants.EXCHANGE_NOTIFICATIONS,
-                        props.getReceivedRoutingKey(),
-                        message
-                );
+            MessageProperties props = message.getMessageProperties();
+            props.setHeader(RETRY_HEADER, nextAttempt);
+            props.setHeader("x-delay", delay);
 
-                channel.basicAck(tag, false);
-            }
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.Constants.EXCHANGE_NOTIFICATIONS,
+                    props.getReceivedRoutingKey(),
+                    message
+            );
+
+            channel.basicAck(tag, false);
         }
     }
 

@@ -14,7 +14,7 @@ import java.util.UUID;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = NotificationRequestPayload.class, name = "REQUEST"),
-        @JsonSubTypes.Type(value = NotificationDestinationPayload.class, name = "DESTINATION")
+        @JsonSubTypes.Type(value = NotificationDestinationPayload.class, name = "REQUEST_DESTINATION")
 })
 public sealed interface Payload permits NotificationRequestPayload, NotificationDestinationPayload {
     UUID getReferenceId();

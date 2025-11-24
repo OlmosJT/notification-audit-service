@@ -10,6 +10,7 @@ import uz.tengebank.notificationcontracts.dto.enums.Language;
 import uz.tengebank.notificationcontracts.dto.enums.Priority;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,7 +18,18 @@ import java.util.UUID;
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "notification_audit_requests", schema = "audit")
+@Table(
+        name = "notification_audit_requests",
+        schema = "audit",
+        indexes = {
+                @Index(name = "idx_audit_req_source_system", columnList = "sourceSystem"),
+                @Index(name = "idx_audit_req_channel", columnList = "channel"),
+                @Index(name = "idx_audit_req_template_code", columnList = "templateCode"),
+                @Index(name = "idx_audit_req_schedule_at", columnList = "scheduleAt"),
+                @Index(name = "idx_audit_req_priority", columnList = "priority"),
+                @Index(name = "idx_audit_req_created_at", columnList = "requestId")
+        }
+)
 public class NotificationAuditRequestEntity {
 
     @Id
@@ -37,11 +49,20 @@ public class NotificationAuditRequestEntity {
     private Priority priority;
 
     private boolean isBatch;
+
     private LocalDateTime scheduleAt;
+
+    private Integer ttlSeconds;
+
+    private String callbackUrl;
+
+    private Integer retryMaxRetries;
+
+    private Integer retryDelaySeconds;
 
     @Column(columnDefinition = "text[]")
     private List<String> tags;
 
-    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL)
-    private List<NotificationAuditDestinationEntity> destinations;
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<NotificationAuditDestinationEntity> destinations = new ArrayList<>();
 }

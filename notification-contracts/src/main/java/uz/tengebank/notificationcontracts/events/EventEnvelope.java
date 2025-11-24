@@ -3,7 +3,6 @@ package uz.tengebank.notificationcontracts.events;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.*;
 import uz.tengebank.notificationcontracts.payload.Payload;
-import uz.tengebank.notificationcontracts.utils.EventEnvelopeDeserializer;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -19,7 +18,6 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonDeserialize(using = EventEnvelopeDeserializer.class)
 public class EventEnvelope {
 
     /**

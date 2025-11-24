@@ -9,7 +9,9 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "notification_request_history", schema = "audit", indexes = {
         @Index(name = "idx_req_hist_req_id", columnList = "request_id"),
-        @Index(name = "idx_req_hist_occurred_at", columnList = "occurredAt")
+        @Index(name = "idx_req_hist_occurred_at", columnList = "occurredAt"),
+        @Index(name = "idx_req_hist_status", columnList = "status"),
+        @Index(name = "idx_req_hist_reporter_service", columnList = "reporterService")
 })
 @Getter @Setter @Builder
 @AllArgsConstructor
@@ -26,6 +28,9 @@ public class NotificationRequestHistoryEntity {
 
     @Column(nullable = false)
     private String reporterService;
+
+    @Column(nullable = false, length = 100)
+    private String eventType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
