@@ -27,12 +27,12 @@ public class RabbitMQConfig {
         }
 
         // --- Main Exchange and Queue ---
-        public static final String EXCHANGE_NOTIFICATIONS = "notifications.exchange";
+        public static final String EXCHANGE_NOTIFICATIONS = "notifications.audit.exchange";
         public static final String QUEUE_EVENTS = "notification.events.queue";
         public static final String ROUTING_KEY_EVENTS = "notification.#";
 
         // --- Dead Letter Exchange and Queue ---
-        public static final String EXCHANGE_NOTIFICATIONS_DLX = "notifications.exchange.dlx";
+        public static final String EXCHANGE_NOTIFICATIONS_DLX = "notifications.audit.exchange.dlx";
         public static final String QUEUE_EVENTS_DLQ = "notification.events.dlq";
 
     }
@@ -71,18 +71,6 @@ public class RabbitMQConfig {
         executor.setVirtualThreads(true);
         factory.setTaskExecutor(executor);
         factory.setMessageConverter(messageConverter);
-
-        log.info("==========================================================");
-        log.info("🐰 RABBITMQ LISTENER FACTORY CONFIGURATION");
-        log.info("==========================================================");
-        log.info("Task Executor      : {} (Virtual Threads Enabled)", executor.getClass().getSimpleName());
-        log.info("Thread Prefix      : {}", executor.getThreadNamePrefix());
-        log.info("Acknowledge Mode   : MANUAL (Applies to @RabbitListener)");
-        log.info("Prefetch Count     : 50 (Messages per consumer)");
-        log.info("Message Converter  : Jackson2JsonMessageConverter");
-        log.info("Trusted Packages   : uz.tengebank.notificationcontracts.*");
-        log.info("==========================================================");
-
         return factory;
     }
 

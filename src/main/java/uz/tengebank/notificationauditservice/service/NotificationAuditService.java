@@ -67,7 +67,6 @@ public class NotificationAuditService {
 
         // Parent
         var requestEntity = new NotificationAuditRequestEntity();
-
         requestEntity.setRequestId(dto.requestId());
         requestEntity.setChannel(dto.channel());
         requestEntity.setTemplateCode(dto.templateCode());
@@ -81,12 +80,13 @@ public class NotificationAuditService {
         requestEntity.setRetryMaxRetries(metadata.retryPolicy().maxRetries());
         requestEntity.setRetryDelaySeconds(metadata.retryPolicy().retryDelaySeconds());
         requestEntity.setTags(metadata.tags());
-        requestEntity.setDestinations(new ArrayList<>());
+
+        var savedRequest = requestRepository.save(requestEntity); // Save a new request batch
 
         // Child Destinations
         List<NotificationAuditDestinationEntity> destEntities = dto.destinations().stream().map(destDto -> {
             var entity = new NotificationAuditDestinationEntity();
-            entity.setRequest(requestEntity);
+            entity.setRequest(savedRequest); // Link to the MANAGED parent entity
             entity.setDestinationId(destDto.destinationId());
             entity.setPhone(destDto.phone());
             entity.setEmail(destDto.email());
@@ -95,22 +95,21 @@ public class NotificationAuditService {
             return entity;
         }).toList();
 
-        requestEntity.getDestinations().addAll(destEntities);
+        var savedDestinations = destinationRepository.saveAll(destEntities); // Save a new request destinations
 
-        requestRepository.save(requestEntity);
 
-        // Track the request history
         var reqHistory = NotificationRequestHistoryEntity.builder()
-                .request(requestEntity)
+                .request(savedRequest)
                 .reporterService(envelope.getSourceService())
                 .eventType(envelope.getEventType())
                 .status(payload.status())
                 .details(payload.message())
                 .occurredAt(envelope.getEventTimestamp())
                 .build();
+
         requestHistoryRepo.save(reqHistory);
 
-        List<NotificationDestinationHistoryEntity> destHistories = destEntities.stream().map(destEntity ->
+        List<NotificationDestinationHistoryEntity> destHistories = savedDestinations.stream().map(destEntity ->
                 NotificationDestinationHistoryEntity.builder()
                         .destination(destEntity)
                         .status(IndividualNotificationStatus.ACCEPTED)
