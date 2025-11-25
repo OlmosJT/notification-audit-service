@@ -27,12 +27,12 @@ public class RabbitMQConfig {
         }
 
         // --- Main Exchange and Queue ---
-        public static final String EXCHANGE_NOTIFICATIONS = "notifications.audit.exchange";
+        public static final String EXCHANGE_NOTIFICATIONS = "notification.audit.exchange";
         public static final String QUEUE_EVENTS = "notification.events.queue";
         public static final String ROUTING_KEY_EVENTS = "notification.#";
 
         // --- Dead Letter Exchange and Queue ---
-        public static final String EXCHANGE_NOTIFICATIONS_DLX = "notifications.audit.exchange.dlx";
+        public static final String EXCHANGE_NOTIFICATIONS_DLX = "notification.audit.exchange.dlx";
         public static final String QUEUE_EVENTS_DLQ = "notification.events.dlq";
 
     }
